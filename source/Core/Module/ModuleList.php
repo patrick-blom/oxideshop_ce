@@ -6,6 +6,10 @@
 
 namespace OxidEsales\EshopCommunity\Core\Module;
 
+use OxidEsales\EshopCommunity\Internal\Module\Configuration\Dao\ShopConfigurationDao;
+use OxidEsales\EshopCommunity\Internal\Module\Configuration\Dao\ShopConfigurationDaoInterface;
+use OxidEsales\EshopCommunity\Internal\Utility\ContextInterface;
+
 /**
  * Modules list class.
  *
@@ -524,6 +528,13 @@ class ModuleList extends \OxidEsales\Eshop\Core\Base
      */
     public function getModulesFromDir($sModulesDir, $sVendorDir = null)
     {
+        $moduleList = $this->buildModuleList();
+        uasort($moduleList, [$this, '_sortModules']);
+
+        $this->_aModules = $moduleList;
+
+        return $this->_aModules;
+
         $sModulesDir = \OxidEsales\Eshop\Core\Registry::getUtilsFile()->normalizeDir($sModulesDir);
 
         foreach (glob($sModulesDir . '*') as $sModuleDirPath) {
@@ -763,5 +774,33 @@ class ModuleList extends \OxidEsales\Eshop\Core\Base
         if (!is_readable($moduleClassFile)) {
             $invalidModuleClasses[$extendedShopClass][] = $moduleClass;
         }
+    }
+
+    /**
+     * @return array
+     */
+    private function buildModuleList(): array
+    {
+        $container = \OxidEsales\EshopCommunity\Internal\Application\ContainerFactory::getInstance()->getContainer();
+        /**
+         * @var ShopConfigurationDaoInterface $shopConfigurationDao
+         */
+        $shopConfigurationDao = $container->get(ShopConfigurationDaoInterface::class);
+        $context = $container->get(ContextInterface::class);
+        $shopConfiguration = $shopConfigurationDao->get(
+            $context->getEnvironment(),
+            $context->getCurrentShopId()
+        );
+
+        $moduleConfigurations = $shopConfiguration->getModuleConfigurations();
+        $moduleList = [];
+        foreach ($moduleConfigurations as $moduleId => $moduleConfiguration) {
+            $module = new \OxidEsales\Eshop\Core\Module\Module();
+            if ($module->load($moduleId)) {
+                $moduleList[$moduleId] = $module;
+            }
+        }
+
+        return $moduleList;
     }
 }
