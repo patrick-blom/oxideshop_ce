@@ -4,6 +4,10 @@ services:
     class: OxidEsales\EshopCommunity\Internal\Module\Configuration\Dao\ModuleConfigurationDao
     autowire: true
 
+  OxidEsales\EshopCommunity\Internal\Module\Configuration\Dao\ShopConfigurationDaoInterface:
+    class: OxidEsales\EshopCommunity\Internal\Module\Configuration\Dao\ShopConfigurationDao
+    autowire: true
+
   OxidEsales\EshopCommunity\Internal\Module\Configuration\Dao\ProjectConfigurationDaoInterface:
     class: OxidEsales\EshopCommunity\Internal\Module\Configuration\Dao\ProjectConfigurationDao
     arguments:
