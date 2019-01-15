@@ -6,6 +6,11 @@
 
 namespace OxidEsales\EshopCommunity\Core\Module;
 
+use OxidEsales\EshopCommunity\Internal\Module\Configuration\Dao\ShopConfigurationDaoInterface;
+use OxidEsales\EshopCommunity\Internal\Module\Configuration\DataObject\ModuleConfiguration;
+use OxidEsales\EshopCommunity\Internal\Module\State\ModuleStateServiceInterface;
+use OxidEsales\EshopCommunity\Internal\Utility\ContextInterface;
+
 /**
  * Module class.
  *
@@ -18,6 +23,29 @@ class Module extends \OxidEsales\Eshop\Core\Base
      * Metadata version as defined in metadata.php
      */
     protected $metaDataVersion;
+
+    /**
+     * @var ModuleConfiguration
+     */
+    protected $currentModuleConfiguration;
+    /**
+     * Modules info array
+     *
+     * @var array
+     */
+    protected $_aModule = [];
+    /**
+     * Defines if module has metadata file or not
+     *
+     * @var bool
+     */
+    protected $_blMetadata = false;
+    /**
+     * Defines if module is registered in metadata or legacy storage
+     *
+     * @var bool
+     */
+    protected $_blRegistered = false;
 
     /**
      * @return mixed
@@ -36,37 +64,6 @@ class Module extends \OxidEsales\Eshop\Core\Base
     }
 
     /**
-     * Modules info array
-     *
-     * @var array
-     */
-    protected $_aModule = [];
-
-    /**
-     * Defines if module has metadata file or not
-     *
-     * @var bool
-     */
-    protected $_blMetadata = false;
-
-    /**
-     * Defines if module is registered in metadata or legacy storage
-     *
-     * @var bool
-     */
-    protected $_blRegistered = false;
-
-    /**
-     * Set passed module data
-     *
-     * @param array $aModule module data
-     */
-    public function setModuleData($aModule)
-    {
-        $this->_aModule = $aModule;
-    }
-
-    /**
      * Get the modules metadata array
      *
      * @return  array Module meta data array
@@ -74,30 +71,6 @@ class Module extends \OxidEsales\Eshop\Core\Base
     public function getModuleData()
     {
         return $this->_aModule;
-    }
-
-    /**
-     * Load module info
-     *
-     * @param string $sModuleId Module ID
-     *
-     * @return bool
-     */
-    public function load($sModuleId)
-    {
-        $sModulePath = $this->getModuleFullPath($sModuleId);
-        $sMetadataPath = $sModulePath . "/metadata.php";
-
-        if ($sModulePath && is_readable($sMetadataPath)) {
-            $this->includeModuleMetaData($sMetadataPath);
-            $this->_blRegistered = true;
-            $this->_blMetadata = true;
-            $this->_aModule['active'] = $this->isActive();
-
-            return true;
-        }
-
-        return false;
     }
 
     /**
@@ -125,27 +98,90 @@ class Module extends \OxidEsales\Eshop\Core\Base
     }
 
     /**
-     * Get module description
+     * Get module id's with path
      *
-     * @return string
+     * @return array
      */
-    public function getDescription()
+    public function getModulePaths()
     {
-        $iLang = \OxidEsales\Eshop\Core\Registry::getLang()->getTplLanguage();
-
-        return $this->getInfo("description", $iLang);
+        return $this->getConfig()->getConfigParam('aModulePaths');
     }
 
     /**
-     * Get module title
+     * Load module info
+     *
+     * @param string $sModuleId Module ID
+     *
+     * @return bool
+     */
+    public function load($sModuleId)
+    {
+        $container = $this->getContainer();
+        /**
+         * @var ShopConfigurationDaoInterface $shopConfigurationDao
+         */
+        $shopConfigurationDao = $container->get(ShopConfigurationDaoInterface::class);
+        $context = $container->get(ContextInterface::class);
+        $shopConfiguration = $shopConfigurationDao->get(
+            $context->getEnvironment(),
+            $context->getCurrentShopId()
+        );
+
+        $moduleConfigurations = $shopConfiguration->getModuleConfigurations();
+        if (isset($moduleConfigurations[$sModuleId]) &&
+            $moduleConfigurations[$sModuleId] instanceof ModuleConfiguration
+        ) {
+            $this->currentModuleConfiguration = $moduleConfigurations[$sModuleId];
+
+            return true;
+        }
+
+        return false;
+
+
+        $sModulePath = $this->getModuleFullPath($sModuleId);
+        $sMetadataPath = $sModulePath . "/metadata.php";
+
+        if ($sModulePath && is_readable($sMetadataPath)) {
+            $this->includeModuleMetaData($sMetadataPath);
+            $this->_blRegistered = true;
+            $this->_blMetadata = true;
+            $this->_aModule['active'] = $this->isActive();
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @return \Psr\Container\ContainerInterface
+     */
+    private function getContainer(): \Psr\Container\ContainerInterface
+    {
+        $container = \OxidEsales\EshopCommunity\Internal\Application\ContainerFactory::getInstance()->getContainer();
+
+        return $container;
+    }
+
+    /**
+     * Returns full module path
+     *
+     * @param string $sModuleId
      *
      * @return string
      */
-    public function getTitle()
+    public function getModuleFullPath($sModuleId = null)
     {
-        $iLang = \OxidEsales\Eshop\Core\Registry::getLang()->getTplLanguage();
+        if (!$sModuleId) {
+            $sModuleId = $this->getId();
+        }
 
-        return $this->getInfo("title", $iLang);
+        if ($sModuleDir = $this->getModulePath($sModuleId)) {
+            return $this->getConfig()->getModulesDir() . $sModuleDir;
+        }
+
+        return false;
     }
 
     /**
@@ -155,7 +191,120 @@ class Module extends \OxidEsales\Eshop\Core\Base
      */
     public function getId()
     {
-        return $this->_aModule['id'];
+        return $this->currentModuleConfiguration->getId();
+    }
+
+    /**
+     * Get module dir
+     *
+     * @param string $sModuleId Module ID
+     *
+     * @return string
+     */
+    public function getModulePath($sModuleId = null)
+    {
+        if (!$sModuleId) {
+            $sModuleId = $this->getId();
+        }
+
+        $aModulePaths = $this->getModulePaths();
+        $sModulePath = (isset($aModulePaths[$sModuleId])) ? $aModulePaths[$sModuleId] : '';
+
+        // if still no module dir, try using module ID as dir name
+        if (!$sModulePath && is_dir($this->getConfig()->getModulesDir() . $sModuleId)) {
+            $sModulePath = $sModuleId;
+        }
+
+        return $sModulePath;
+    }
+
+    /**
+     * Include data from metadata.php
+     *
+     * @param string $metadataPath Path to metadata.php
+     */
+    protected function includeModuleMetaData($metadataPath)
+    {
+        include $metadataPath;
+        /**
+         * metadata.php should include a variable called $aModule, if this variable is not set,
+         * an empty array is assigned to self::aModule
+         */
+        if (!isset($aModule)) {
+            $aModule = [];
+        }
+        $this->setModuleData($aModule);
+
+        /**
+         * metadata.php should include a variable called $sMetadataVersion
+         */
+        if (isset($sMetadataVersion)) {
+            $this->setMetaDataVersion($sMetadataVersion);
+        }
+    }
+
+    /**
+     * Set passed module data
+     *
+     * @param array $aModule module data
+     */
+    public function setModuleData($aModule)
+    {
+        $this->_aModule = $aModule;
+    }
+
+    /**
+     * Check if extension is active
+     *
+     * @return bool
+     */
+    public function isActive()
+    {
+        $container = $this->getContainer();
+        $moduleStateService = $container->get(ModuleStateServiceInterface::class);
+        $context = $container->get(ContextInterface::class);
+
+        return $moduleStateService->isActive(
+            $this->currentModuleConfiguration->getId(),
+            $context->getCurrentShopId()
+        );
+
+        $blActive = false;
+        $sId = $this->getId();
+        if (!is_null($sId)) {
+            $blActive = !$this->_isInDisabledList($sId);
+            if ($blActive && $this->hasExtendClass()) {
+                $blActive = $this->_isExtensionsActive();
+            }
+        }
+
+        return $blActive;
+    }
+
+    /**
+     * Checks if module is in disabled list.
+     *
+     * @param string $sId Module id
+     *
+     * @return bool
+     */
+    protected function _isInDisabledList($sId)
+    {
+        return in_array($sId, (array) $this->getConfig()->getConfigParam('aDisabledModules'));
+    }
+
+    /**
+     * Checks if has extend class.
+     *
+     * @return bool
+     */
+    public function hasExtendClass()
+    {
+        $aExtensions = $this->getExtensions();
+
+        return isset($aExtensions)
+               && is_array($aExtensions)
+               && !empty($aExtensions);
     }
 
     /**
@@ -171,13 +320,157 @@ class Module extends \OxidEsales\Eshop\Core\Base
     }
 
     /**
+     * Translate module metadata information about the patched shop classes
+     * into Unified Namespace. There might still be BC class names used in module metadata.php.
+     *
+     * @param array $rawExtensions Extension information from module metadata.php.
+     *
+     * @return array
+     */
+    protected function getUnifiedShopClassExtensionsForBc($rawExtensions)
+    {
+        $extensions = [];
+
+        foreach ($rawExtensions as $classToBePatched => $moduleClass) {
+            if (!\OxidEsales\Eshop\Core\NamespaceInformationProvider::isNamespacedClass($classToBePatched)) {
+                $bcMap = \OxidEsales\Eshop\Core\Registry::getBackwardsCompatibilityClassMap();
+                $classToBePatched = array_key_exists(strtolower($classToBePatched), $bcMap) ? $bcMap[strtolower($classToBePatched)] : $classToBePatched;
+            }
+            $extensions[$classToBePatched] = $moduleClass;
+        }
+
+        return $extensions;
+    }
+
+    /**
+     * Checks if module extensions count is the same as in activated extensions list.
+     *
+     * @return bool
+     */
+    protected function _isExtensionsActive()
+    {
+        $aModuleExtensions = $this->getExtensions();
+
+        $aInstalledExtensions = $this->getConfig()->getModulesWithExtendedClass();
+        $iModuleExtensionsCount = $this->_countExtensions($aModuleExtensions);
+        $iActivatedModuleExtensionsCount = $this->_countActivatedExtensions($aModuleExtensions, $aInstalledExtensions);
+
+        return $iModuleExtensionsCount > 0 && $iActivatedModuleExtensionsCount == $iModuleExtensionsCount;
+    }
+
+    /**
+     * Counts module extensions.
+     *
+     * @param array $aModuleExtensions Module extensions
+     *
+     * @return int
+     */
+    protected function _countExtensions($aModuleExtensions)
+    {
+        $iCount = 0;
+        foreach ($aModuleExtensions as $mExtensions) {
+            if (is_array($mExtensions)) {
+                $iCount += count($mExtensions);
+            } else {
+                $iCount++;
+            }
+        }
+
+        return $iCount;
+    }
+
+    /**
+     * Counts activated module extensions.
+     *
+     * @param array $aModuleExtensions    Module extensions
+     * @param array $aInstalledExtensions Installed extensions
+     *
+     * @return int
+     */
+    protected function _countActivatedExtensions($aModuleExtensions, $aInstalledExtensions)
+    {
+        $iActive = 0;
+        foreach ($aModuleExtensions as $sClass => $mExtension) {
+            if (is_array($mExtension)) {
+                foreach ($mExtension as $sExtension) {
+                    if ((isset($aInstalledExtensions[$sClass]) && in_array($sExtension, $aInstalledExtensions[$sClass]))) {
+                        $iActive++;
+                    }
+                }
+            } elseif ((isset($aInstalledExtensions[$sClass]) && in_array($mExtension, $aInstalledExtensions[$sClass]))) {
+                $iActive++;
+            }
+        }
+
+        return $iActive;
+    }
+
+    /**
+     * Get module description
+     *
+     * @return string
+     */
+    public function getDescription()
+    {
+        $iLang = \OxidEsales\Eshop\Core\Registry::getLang()->getTplLanguage();
+
+        return $this->getInfo("description", $iLang);
+    }
+
+    /**
+     * Get module info item. If second param is passed, will try
+     * to get value according selected language.
+     *
+     * @param string $sName name of info item to retrieve
+     * @param string $iLang language ID
+     *
+     * @return mixed
+     */
+    public function getInfo($sName, $iLang = null)
+    {
+        if (isset($this->_aModule[$sName])) {
+            if ($iLang !== null && is_array($this->_aModule[$sName])) {
+                $sValue = null;
+
+                $sLang = \OxidEsales\Eshop\Core\Registry::getLang()->getLanguageAbbr($iLang);
+
+                if (!empty($this->_aModule[$sName])) {
+                    if (!empty($this->_aModule[$sName][$sLang])) {
+                        $sValue = $this->_aModule[$sName][$sLang];
+                    } elseif (!empty($this->_aModule['lang'])) {
+                        // trying to get value according default language
+                        $sValue = $this->_aModule[$sName][$this->_aModule['lang']];
+                    } else {
+                        // returning first array value
+                        $sValue = reset($this->_aModule[$sName]);
+                    }
+
+                    return $sValue;
+                }
+            } else {
+                return $this->_aModule[$sName];
+            }
+        }
+    }
+
+    /**
+     * Get module title
+     *
+     * @return string
+     */
+    public function getTitle()
+    {
+        return $this->currentModuleConfiguration->getTitle();
+    }
+
+    /**
      * Returns associative array of module controller ids and corresponding classes.
      *
      * @return array
      */
     public function getControllers()
     {
-        if (isset($this->_aModule['controllers']) && ! is_array($this->_aModule['controllers'])) {
+        if (isset($this->_aModule['controllers']) && !is_array($this->_aModule['controllers'])) {
             throw new \InvalidArgumentException('Value for metadata key "controllers" must be an array');
         }
 
@@ -279,72 +572,26 @@ class Module extends \OxidEsales\Eshop\Core\Base
     }
 
     /**
-     * Get module info item. If second param is passed, will try
-     * to get value according selected language.
+     * @deprecated since v6.0.0 (2017-03-21); Needed to ensure backwards compatibility.
      *
-     * @param string $sName name of info item to retrieve
-     * @param string $iLang language ID
+     * Backwards compatible version of self::getModuleIdByClassName()
      *
-     * @return mixed
-     */
-    public function getInfo($sName, $iLang = null)
-    {
-        if (isset($this->_aModule[$sName])) {
-            if ($iLang !== null && is_array($this->_aModule[$sName])) {
-                $sValue = null;
-
-                $sLang = \OxidEsales\Eshop\Core\Registry::getLang()->getLanguageAbbr($iLang);
-
-                if (!empty($this->_aModule[$sName])) {
-                    if (!empty($this->_aModule[$sName][$sLang])) {
-                        $sValue = $this->_aModule[$sName][$sLang];
-                    } elseif (!empty($this->_aModule['lang'])) {
-                        // trying to get value according default language
-                        $sValue = $this->_aModule[$sName][$this->_aModule['lang']];
-                    } else {
-                        // returning first array value
-                        $sValue = reset($this->_aModule[$sName]);
-                    }
-
-                    return $sValue;
-                }
-            } else {
-                return $this->_aModule[$sName];
-            }
-        }
-    }
-
-    /**
-     * Check if extension is active
+     * @param string $classPath The class path as defined in metadata.php section 'extend'. This is not a valid file path.
      *
      * @return bool
      */
-    public function isActive()
+    private function backwardsCompatibleGetModuleIdByClassName($classPath)
     {
-        $blActive = false;
-        $sId = $this->getId();
-        if (!is_null($sId)) {
-            $blActive = !$this->_isInDisabledList($sId);
-            if ($blActive && $this->hasExtendClass()) {
-                $blActive = $this->_isExtensionsActive();
+        $moduleId = '';
+        $extensions = (array) $this->getConfig()->getConfigParam('aModuleExtensions');
+        foreach ($extensions as $id => $moduleClasses) {
+            if (in_array($classPath, $moduleClasses)) {
+                $moduleId = $id;
+                break;
             }
         }
 
-        return $blActive;
-    }
-
-    /**
-     * Checks if has extend class.
-     *
-     * @return bool
-     */
-    public function hasExtendClass()
-    {
-        $aExtensions = $this->getExtensions();
-
-        return isset($aExtensions)
-               && is_array($aExtensions)
-               && !empty($aExtensions);
+        return $moduleId;
     }
 
     /**
@@ -383,60 +630,6 @@ class Module extends \OxidEsales\Eshop\Core\Base
     }
 
     /**
-     * Get module dir
-     *
-     * @param string $sModuleId Module ID
-     *
-     * @return string
-     */
-    public function getModulePath($sModuleId = null)
-    {
-        if (!$sModuleId) {
-            $sModuleId = $this->getId();
-        }
-
-        $aModulePaths = $this->getModulePaths();
-        $sModulePath = (isset($aModulePaths[$sModuleId])) ? $aModulePaths[$sModuleId] : '';
-
-        // if still no module dir, try using module ID as dir name
-        if (!$sModulePath && is_dir($this->getConfig()->getModulesDir() . $sModuleId)) {
-            $sModulePath = $sModuleId;
-        }
-
-        return $sModulePath;
-    }
-
-    /**
-     * Returns full module path
-     *
-     * @param string $sModuleId
-     *
-     * @return string
-     */
-    public function getModuleFullPath($sModuleId = null)
-    {
-        if (!$sModuleId) {
-            $sModuleId = $this->getId();
-        }
-
-        if ($sModuleDir = $this->getModulePath($sModuleId)) {
-            return $this->getConfig()->getModulesDir() . $sModuleDir;
-        }
-
-        return false;
-    }
-
-    /**
-     * Get module id's with path
-     *
-     * @return array
-     */
-    public function getModulePaths()
-    {
-        return $this->getConfig()->getConfigParam('aModulePaths');
-    }
-
-    /**
      * Return templates affected by template blocks for given module id.
      *
      * @todo extract oxtplblocks query to ModuleTemplateBlockRepository
@@ -458,150 +651,5 @@ class Module extends \OxidEsales\Eshop\Core\Base
         $sShopId = $this->getConfig()->getShopId();
 
         return \OxidEsales\Eshop\Core\DatabaseProvider::getDb()->getCol("SELECT oxtemplate FROM oxtplblocks WHERE oxmodule = '$sModuleId' AND oxshopid = '$sShopId'");
-    }
-
-    /**
-     * Counts activated module extensions.
-     *
-     * @param array $aModuleExtensions    Module extensions
-     * @param array $aInstalledExtensions Installed extensions
-     *
-     * @return int
-     */
-    protected function _countActivatedExtensions($aModuleExtensions, $aInstalledExtensions)
-    {
-        $iActive = 0;
-        foreach ($aModuleExtensions as $sClass => $mExtension) {
-            if (is_array($mExtension)) {
-                foreach ($mExtension as $sExtension) {
-                    if ((isset($aInstalledExtensions[$sClass]) && in_array($sExtension, $aInstalledExtensions[$sClass]))) {
-                        $iActive++;
-                    }
-                }
-            } elseif ((isset($aInstalledExtensions[$sClass]) && in_array($mExtension, $aInstalledExtensions[$sClass]))) {
-                $iActive++;
-            }
-        }
-
-        return $iActive;
-    }
-
-    /**
-     * Counts module extensions.
-     *
-     * @param array $aModuleExtensions Module extensions
-     *
-     * @return int
-     */
-    protected function _countExtensions($aModuleExtensions)
-    {
-        $iCount = 0;
-        foreach ($aModuleExtensions as $mExtensions) {
-            if (is_array($mExtensions)) {
-                $iCount += count($mExtensions);
-            } else {
-                $iCount++;
-            }
-        }
-
-        return $iCount;
-    }
-
-    /**
-     * Checks if module extensions count is the same as in activated extensions list.
-     *
-     * @return bool
-     */
-    protected function _isExtensionsActive()
-    {
-        $aModuleExtensions = $this->getExtensions();
-
-        $aInstalledExtensions = $this->getConfig()->getModulesWithExtendedClass();
-        $iModuleExtensionsCount = $this->_countExtensions($aModuleExtensions);
-        $iActivatedModuleExtensionsCount = $this->_countActivatedExtensions($aModuleExtensions, $aInstalledExtensions);
-
-        return $iModuleExtensionsCount > 0 && $iActivatedModuleExtensionsCount == $iModuleExtensionsCount;
-    }
-
-    /**
-     * Checks if module is in disabled list.
-     *
-     * @param string $sId Module id
-     *
-     * @return bool
-     */
-    protected function _isInDisabledList($sId)
-    {
-        return in_array($sId, (array) $this->getConfig()->getConfigParam('aDisabledModules'));
-    }
-
-    /**
-     * Include data from metadata.php
-     *
-     * @param string $metadataPath Path to metadata.php
-     */
-    protected function includeModuleMetaData($metadataPath)
-    {
-        include $metadataPath;
-        /**
-         * metadata.php should include a variable called $aModule, if this variable is not set,
-         * an empty array is assigned to self::aModule
-         */
-        if (!isset($aModule)) {
-            $aModule = [];
-        }
-        $this->setModuleData($aModule);
-
-        /**
-         * metadata.php should include a variable called $sMetadataVersion
-         */
-        if (isset($sMetadataVersion)) {
-            $this->setMetaDataVersion($sMetadataVersion);
-        }
-    }
-
-    /**
-     * Translate module metadata information about the patched shop classes
-     * into Unified Namespace. There might still be BC class names used in module metadata.php.
-     *
-     * @param array $rawExtensions Extension information from module metadata.php.
-     *
-     * @return array
-     */
-    protected function getUnifiedShopClassExtensionsForBc($rawExtensions)
-    {
-        $extensions = [];
-
-        foreach ($rawExtensions as $classToBePatched => $moduleClass) {
-            if (!\OxidEsales\Eshop\Core\NamespaceInformationProvider::isNamespacedClass($classToBePatched)) {
-                $bcMap = \OxidEsales\Eshop\Core\Registry::getBackwardsCompatibilityClassMap();
-                $classToBePatched = array_key_exists(strtolower($classToBePatched), $bcMap) ? $bcMap[strtolower($classToBePatched)]: $classToBePatched;
-            }
-            $extensions[$classToBePatched] = $moduleClass;
-        }
-        return $extensions;
-    }
-
-    /**
-     * @deprecated since v6.0.0 (2017-03-21); Needed to ensure backwards compatibility.
-     *
-     * Backwards compatible version of self::getModuleIdByClassName()
-     *
-     * @param string $classPath The class path as defined in metadata.php section 'extend'. This is not a valid file path.
-     *
-     * @return bool
-     */
-    private function backwardsCompatibleGetModuleIdByClassName($classPath)
-    {
-        $moduleId = '';
-        $extensions = (array) $this->getConfig()->getConfigParam('aModuleExtensions');
-        foreach ($extensions as $id => $moduleClasses) {
-            if (in_array($classPath, $moduleClasses)) {
-                $moduleId = $id;
-                break;
-            }
-        }
-
-        return $moduleId;
     }
 }
