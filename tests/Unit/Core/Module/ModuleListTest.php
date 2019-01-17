@@ -713,53 +713,6 @@ class ModuleListTest extends \OxidTestCase
     }
 
     /**
-     * oxmodulelist::_extendsClasses() test case
-     *
-     * @return null
-     */
-    public function testExtendsClasses()
-    {
-        $aModules = array(
-            'oxarticle' => 'mod/testModule&mod2/testModule2/&mod3/dir3/testModule3',
-            'oxorder'   => 'mod7/testModuleOrder&myext/myextclass',
-        );
-
-        $this->getConfig()->setConfigParam("aModules", $aModules);
-
-        $oModuleList = $this->getProxyClass('oxModuleList');
-        $oModuleList->setNonPublicVar("_aModule", $aModules);
-
-        $this->assertTrue($oModuleList->_extendsClasses("mod3/dir3"));
-        $this->assertTrue($oModuleList->_extendsClasses("mod"));
-        $this->assertTrue($oModuleList->_extendsClasses("myext"));
-        $this->assertFalse($oModuleList->_extendsClasses("mo"));
-        $this->assertFalse($oModuleList->_extendsClasses("mod4"));
-        $this->assertFalse($oModuleList->_extendsClasses("mod3/dir"));
-        $this->assertFalse($oModuleList->_extendsClasses("od3/dir"));
-        $this->assertFalse($oModuleList->_extendsClasses("dir3/testModule3"));
-    }
-
-    /**
-     * oxmodulelist::_saveModulePath() test case
-     *
-     * @return null
-     */
-    public function testSaveModulePath()
-    {
-        $aModulePaths = array("testId1" => "testpPath1", "testId2" => "testPath2");
-        $aModulePathsRes = array_merge($aModulePaths, array("testId3" => "testPath3"));
-
-        $oConfig = $this->getMock(\OxidEsales\Eshop\Core\Config::class, array('saveShopConfVar'));
-        $oConfig->expects($this->once())->method('saveShopConfVar')->with($this->equalTo("aarr"), $this->equalTo("aModulePaths"), $this->equalTo($aModulePathsRes));
-
-        $oModuleList = $this->getMock(\OxidEsales\Eshop\Core\Module\ModuleList::class, array('getModuleConfigParametersByKey', 'getConfig'));
-        $oModuleList->expects($this->once())->method('getModuleConfigParametersByKey')->with('Paths')->will($this->returnValue($aModulePaths));
-        $oModuleList->expects($this->once())->method('getConfig')->will($this->returnValue($oConfig));
-
-        $oModuleList->_saveModulePath("testId3", "testPath3");
-    }
-
-    /**
      * @return array
      */
     public function providerIsVendorDir()

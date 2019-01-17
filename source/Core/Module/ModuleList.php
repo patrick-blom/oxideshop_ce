@@ -6,6 +6,8 @@
 
 namespace OxidEsales\EshopCommunity\Core\Module;
 
+use OxidEsales\Eshop\Core\Module\Module;
+
 /**
  * Modules list class.
  *
@@ -381,7 +383,7 @@ class ModuleList extends \OxidEsales\Eshop\Core\Base
     /**
      * Returns oxModule object.
      *
-     * @return oxModule
+     * @return Module
      */
     public function getModule()
     {
@@ -545,25 +547,6 @@ class ModuleList extends \OxidEsales\Eshop\Core\Base
                 if ($oModule->loadByDir($sModuleDirName)) {
                     $sModuleId = $oModule->getId();
                     $this->_aModules[$sModuleId] = $oModule;
-
-                    $aModulePaths = $this->getModuleConfigParametersByKey(static::MODULE_KEY_PATHS);
-
-                    if (!is_array($aModulePaths) || !array_key_exists($sModuleId, $aModulePaths)) {
-                        // saving module path info
-                        $this->_saveModulePath($sModuleId, $sModuleDirName);
-
-                        //checking if this is new module and if it extends any eshop class
-                        if (!$this->_extendsClasses($sModuleDirName)) {
-                            // if not - marking it as disabled by default
-
-                            /** @var \OxidEsales\Eshop\Core\Module\ModuleCache $oModuleCache */
-                            $oModuleCache = oxNew('oxModuleCache', $oModule);
-                            /** @var \OxidEsales\Eshop\Core\Module\ModuleInstaller $oModuleInstaller */
-                            $oModuleInstaller = oxNew('oxModuleInstaller', $oModuleCache);
-
-                            $oModuleInstaller->deactivate($oModule);
-                        }
-                    }
                 }
             }
         }
@@ -659,41 +642,6 @@ class ModuleList extends \OxidEsales\Eshop\Core\Base
         }
 
         return false;
-    }
-
-    /**
-     * Checks if module extends any shop class.
-     *
-     * @param string $sModuleDir dir path
-     *
-     * @return bool
-     */
-    protected function _extendsClasses($sModuleDir)
-    {
-        $aModules = $this->getConfig()->getConfigParam('aModules');
-        if (is_array($aModules)) {
-            $sModules = implode('&', $aModules);
-
-            if (preg_match("@(^|&+)" . $sModuleDir . "\b@", $sModules)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Saving module path info. Module path is saved to config variable "aModulePaths".
-     *
-     * @param string $sModuleId   Module ID
-     * @param string $sModulePath Module path
-     */
-    protected function _saveModulePath($sModuleId, $sModulePath)
-    {
-        $aModulePaths = $this->getModuleConfigParametersByKey(static::MODULE_KEY_PATHS);
-
-        $aModulePaths[$sModuleId] = $sModulePath;
-        $this->getConfig()->saveShopConfVar('aarr', 'aModulePaths', $aModulePaths);
     }
 
     /**
