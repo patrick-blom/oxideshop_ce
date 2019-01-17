@@ -6,6 +6,10 @@
 
 namespace OxidEsales\EshopCommunity\Core\Module;
 
+use OxidEsales\EshopCommunity\Internal\Module\Configuration\DataObject\ModuleConfiguration;
+use OxidEsales\EshopCommunity\Internal\Module\State\ModuleStateServiceInterface;
+use OxidEsales\EshopCommunity\Internal\Utility\ContextInterface;
+
 /**
  * Module class.
  *
@@ -55,6 +59,12 @@ class Module extends \OxidEsales\Eshop\Core\Base
      * @var bool
      */
     protected $_blRegistered = false;
+
+
+    /**
+     * @var ModuleConfiguration
+     */
+    protected $moduleConfiguration;
 
     /**
      * Set passed module data
@@ -321,16 +331,18 @@ class Module extends \OxidEsales\Eshop\Core\Base
      */
     public function isActive()
     {
-        $blActive = false;
-        $sId = $this->getId();
-        if (!is_null($sId)) {
-            $blActive = !$this->_isInDisabledList($sId);
-            if ($blActive && $this->hasExtendClass()) {
-                $blActive = $this->_isExtensionsActive();
-            }
+        if (null === $this->moduleConfiguration) {
+            return false;
         }
 
-        return $blActive;
+        $container = $this->getContainer();
+        $moduleStateService = $container->get(ModuleStateServiceInterface::class);
+        $context = $container->get(ContextInterface::class);
+
+        return $moduleStateService->isActive(
+            $this->moduleConfiguration->getId(),
+            $context->getCurrentShopId()
+        );
     }
 
     /**
@@ -603,5 +615,14 @@ class Module extends \OxidEsales\Eshop\Core\Base
         }
 
         return $moduleId;
+    }
+
+    /**
+     * @return \Psr\Container\ContainerInterface
+     */
+    private function getContainer(): \Psr\Container\ContainerInterface
+    {
+        $container = \OxidEsales\EshopCommunity\Internal\Application\ContainerFactory::getInstance()->getContainer();
+        return $container;
     }
 }
