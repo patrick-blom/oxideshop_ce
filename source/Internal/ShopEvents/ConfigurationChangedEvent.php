@@ -10,11 +10,11 @@ namespace OxidEsales\EshopCommunity\Internal\ShopEvents;
 use Symfony\Component\EventDispatcher\Event;
 
 /**
- * Class ConfigurationChangeEvent
+ * Class ConfigurationChangedEvent
  *
  * @package OxidEsales\EshopCommunity\Internal\ShopEvents
  */
-class ConfigurationChangeEvent extends Event
+class ConfigurationChangedEvent extends Event
 {
     const NAME = self::class;
 
@@ -23,42 +23,42 @@ class ConfigurationChangeEvent extends Event
      *
      * @var string
      */
-    protected $configurationVariable = null;
+    private $configurationVariable = null;
 
     /**
      * Variable change affects all pages yes/no.
      *
      * @var bool
      */
-    protected $affectsAllPages = false;
+    private $affectsAllPages = false;
 
     /**
      * Variable change affects start page yes/no.
      *
      * @var bool
      */
-    protected $affectsStartPage = false;
+    private $affectsStartPage = false;
 
     /**
      * Variable change affects all details pages yes/no.
      *
      * @var bool
      */
-    protected $affectsAllDetails = false;
+    private $affectsAllDetails = false;
 
     /**
      * Variable change affects all lists yes/no.
      *
      * @var bool
      */
-    protected $affectsAllLists = false;
+    private $affectsAllLists = false;
 
     /**
      * Setter for configuration variable name.
      *
      * @param string $configurationVariable Config varname.
      */
-    public function setConfigurationVariable($configurationVariable)
+    public function setConfigurationVariable(string $configurationVariable)
     {
         $this->configurationVariable = $configurationVariable;
     }
@@ -78,7 +78,7 @@ class ConfigurationChangeEvent extends Event
      *
      * @param bool $affectsAllPages Flag
      */
-    public function setAffectsAllPages($affectsAllPages)
+    public function setAffectsAllPages(bool $affectsAllPages)
     {
         $this->affectsAllPages = (bool) $affectsAllPages;
     }
@@ -88,7 +88,7 @@ class ConfigurationChangeEvent extends Event
      *
      * @param bool $affectsAllDetails Flag
      */
-    public function setAffectsAllDetails($affectsAllDetails)
+    public function setAffectsAllDetails(bool $affectsAllDetails)
     {
         $this->affectsAllDetails = (bool) $affectsAllDetails;
     }
@@ -98,7 +98,7 @@ class ConfigurationChangeEvent extends Event
      *
      * @param bool $affectsAllLists Flag
      */
-    public function setAffectsAllLists($affectsAllLists)
+    public function setAffectsAllLists(bool $affectsAllLists)
     {
         $this->affectsAllLists = (bool) $affectsAllLists;
     }
@@ -108,7 +108,7 @@ class ConfigurationChangeEvent extends Event
      *
      * @param bool $affectsStartPage Flag
      */
-    public function setAffectsStartPage($affectsStartPage)
+    public function setAffectsStartPage(bool $affectsStartPage)
     {
         $this->affectsStartPage = (bool) $affectsStartPage;
     }

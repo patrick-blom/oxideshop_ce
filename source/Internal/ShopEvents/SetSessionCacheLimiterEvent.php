@@ -24,14 +24,14 @@ class SetSessionCacheLimiterEvent extends Event
      *
      * @var bool
      */
-    protected $limiterIsSet = false;
+    private $limiterIsSet = false;
 
     /**
      * Setter for limiter status flag.
      *
-     * @param string $result
+     * @param bool $result
      */
-    public function markLimiterSet($flag)
+    public function markLimiterSet(bool $flag)
     {
         $this->limiterIsSet = $flag;
     }

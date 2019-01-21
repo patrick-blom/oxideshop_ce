@@ -24,14 +24,14 @@ class ExitEvent extends Event
      *
      * @var bool
      */
-    protected $result = false;
+    private $result = false;
 
     /**
      * Setter for result.
      *
-     * @param string $result
+     * @param bool $result
      */
-    public function setResult($result)
+    public function setResult(bool $result)
     {
         $this->result = $result;
     }

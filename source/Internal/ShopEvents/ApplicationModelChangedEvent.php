@@ -10,11 +10,11 @@ namespace OxidEsales\EshopCommunity\Internal\ShopEvents;
 use Symfony\Component\EventDispatcher\Event;
 
 /**
- * Class ApplicationModelChangeEvent
+ * Class ApplicationModelChangedEvent
  *
  * @package OxidEsales\EshopCommunity\Internal\ShopEvents
  */
-class ApplicationModelChangeEvent extends Event
+class ApplicationModelChangedEvent extends Event
 {
     const NAME = self::class;
 
@@ -23,14 +23,14 @@ class ApplicationModelChangeEvent extends Event
      *
      * @var string
      */
-    protected $modelClass = '';
+    private $modelClass = '';
 
     /**
      * Arguments
      *
      * @var array
      */
-    protected $arguments = [];
+    private $arguments = [];
 
     /**
      * Getter for model class name.
@@ -45,9 +45,9 @@ class ApplicationModelChangeEvent extends Event
     /**
      * Setter for model class name.
      *
-     * @param bool $modelClass Model class name
+     * @param string $modelClass Model class name
      */
-    public function setModelClass($modelClass)
+    public function setModelClass(string $modelClass)
     {
         $this->modelClass = $modelClass;
     }
@@ -67,7 +67,7 @@ class ApplicationModelChangeEvent extends Event
      *
      * @param array $arguments
      */
-    public function setArguments($arguments)
+    public function setArguments(array $arguments)
     {
         $this->arguments = $arguments;
     }

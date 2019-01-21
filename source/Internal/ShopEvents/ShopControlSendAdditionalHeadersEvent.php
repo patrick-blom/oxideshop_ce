@@ -24,17 +24,17 @@ class ShopControlSendAdditionalHeadersEvent extends Event
      *
      * @var bool
      */
-    protected $result = false;
+    private $result = false;
 
     /**
      * @var \OxidEsales\Eshop\Core\Controller\BaseController
      */
-    protected $controller = null;
+    private $controller = null;
 
     /**
      * @var \OxidEsales\Eshop\Core\ShopControl
      */
-    protected $shopControl = null;
+    private $shopControl = null;
 
     /**
      * Setter for ShopControl object.
@@ -49,9 +49,9 @@ class ShopControlSendAdditionalHeadersEvent extends Event
     /**
      * Setter for result.
      *
-     * @param string $result
+     * @param bool $result
      */
-    public function setResult($result)
+    public function setResult(bool $result)
     {
         $this->result = $result;
     }

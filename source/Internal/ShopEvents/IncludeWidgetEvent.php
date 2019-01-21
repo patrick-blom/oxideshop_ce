@@ -24,17 +24,17 @@ class IncludeWidgetEvent extends Event
      *
      * @var string
      */
-    protected $result = '';
+    private $result = '';
 
     /**
      * @var Smarty
      */
-    protected $smarty = null;
+    private $smarty = null;
 
     /**
      * @var array
      */
-    protected $parameters = [];
+    private $parameters = [];
 
     /**
      * Setter for result.
@@ -51,7 +51,7 @@ class IncludeWidgetEvent extends Event
      *
      * @param array $parameters Parameters
      */
-    public function setParameters($parameters)
+    public function setParameters(array $parameters)
     {
         $this->parameters = $parameters;
     }
@@ -61,7 +61,7 @@ class IncludeWidgetEvent extends Event
      *
      * @param Smarty $smarty Smarty object
      */
-    public function setSmarty($smarty)
+    public function setSmarty(\Smarty $smarty)
     {
         $this->smarty = $smarty;
     }

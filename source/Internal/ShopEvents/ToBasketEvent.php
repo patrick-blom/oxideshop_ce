@@ -24,14 +24,14 @@ class ToBasketEvent extends Event
      *
      * @var string
      */
-    protected $redirectUrl = null;
+    private $redirectUrl = '';
 
     /**
-     * Setter for redirect url.
+     * Constructor.
      *
      * @param string $redirectUrl Redirect Url.
      */
-    public function setRedirectUrl($redirectUrl)
+    public function __construct(string $redirectUrl)
     {
         $this->redirectUrl = $redirectUrl;
     }

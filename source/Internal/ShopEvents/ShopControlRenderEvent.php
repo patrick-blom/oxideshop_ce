@@ -22,7 +22,7 @@ class ShopControlRenderEvent extends Event
     /**
      * @var \OxidEsales\Eshop\Core\ShopControl
      */
-    protected $shopControl = null;
+    private $shopControl = null;
 
     /**
      * Setter for ShopControl object.
