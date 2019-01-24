@@ -11,7 +11,7 @@ class CheckoutProcessCest
      *
      * @param AcceptanceTester $I
      */
-    public function basketFlyout(AcceptanceTester $I, Basket $basket)
+    public function checkBasketFlyout(AcceptanceTester $I, Basket $basket)
     {
         $I->wantToTest('basket flyout');
 
@@ -63,7 +63,7 @@ class CheckoutProcessCest
      *
      * @param AcceptanceTester $I
      */
-    public function outOfStockNotBuyableProductDuringOrder(AcceptanceTester $I, Basket $basket)
+    public function buyOutOfStockNotBuyableProductDuringOrder(AcceptanceTester $I, Basket $basket)
     {
         $I->wantToTest('if no fatal errors or exceptions are thrown, but an error message is shown, if the same 
         product was sold out by other user during the checkout');
@@ -149,7 +149,7 @@ class CheckoutProcessCest
      * @param AcceptanceTester $I
      * @param Basket           $basket
      */
-    public function bundledProduct(AcceptanceTester $I, Basket $basket)
+    public function buyProductWithBundledItem(AcceptanceTester $I, Basket $basket)
     {
         $I->wantToTest('bundled product');
 

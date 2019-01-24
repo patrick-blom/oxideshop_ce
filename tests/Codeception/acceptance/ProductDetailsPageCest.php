@@ -12,7 +12,7 @@ class ProductDetailsPageCest
      *
      * @param AcceptanceTester $I
      */
-    public function detailsPageNavigation(AcceptanceTester $I)
+    public function navigateInDetailsPage(AcceptanceTester $I)
     {
         $I->wantToTest('product navigation in details page');
 
@@ -131,7 +131,7 @@ class ProductDetailsPageCest
      * @param AcceptanceTester  $I
      * @param ProductNavigation $productNavigation
      */
-    public function productPriceAlert(AcceptanceTester $I, ProductNavigation $productNavigation)
+    public function sendProductPriceAlert(AcceptanceTester $I, ProductNavigation $productNavigation)
     {
         $I->wantToTest('product price alert functionality');
 
@@ -167,7 +167,7 @@ class ProductDetailsPageCest
      * @param AcceptanceTester  $I
      * @param ProductNavigation $productNavigation
      */
-    public function productVariantSelection(AcceptanceTester $I, ProductNavigation $productNavigation)
+    public function selectProductVariant(AcceptanceTester $I, ProductNavigation $productNavigation)
     {
         $I->wantToTest('product variant selection and order in details page');
 
@@ -240,7 +240,7 @@ class ProductDetailsPageCest
      * @param AcceptanceTester  $I
      * @param ProductNavigation $productNavigation
      */
-    public function productAccessories(AcceptanceTester $I, ProductNavigation $productNavigation)
+    public function checkProductAccessories(AcceptanceTester $I, ProductNavigation $productNavigation)
     {
         $I->wantToTest('Product\'s accessories');
 
@@ -276,7 +276,7 @@ class ProductDetailsPageCest
      * @param AcceptanceTester  $I
      * @param ProductNavigation $productNavigation
      */
-    public function similarProducts(AcceptanceTester $I, ProductNavigation $productNavigation)
+    public function checkSimilarProducts(AcceptanceTester $I, ProductNavigation $productNavigation)
     {
         $I->wantToTest('similar products on details page');
 
@@ -312,7 +312,7 @@ class ProductDetailsPageCest
      * @param AcceptanceTester  $I
      * @param ProductNavigation $productNavigation
      */
-    public function productCrossSelling(AcceptanceTester $I, ProductNavigation $productNavigation)
+    public function checkProductCrossSelling(AcceptanceTester $I, ProductNavigation $productNavigation)
     {
         $I->wantToTest('Product\'s crossselling on details page');
 
@@ -349,7 +349,7 @@ class ProductDetailsPageCest
      *
      * @param ProductNavigation $productNavigation
      */
-    public function multidimensionalVariantsInDetailsPage(ProductNavigation $productNavigation)
+    public function selectMultidimensionalVariantsInDetailsPage(ProductNavigation $productNavigation)
     {
         $productNavigation->wantToTest('multidimensional variants functionality in details page');
 
@@ -432,7 +432,7 @@ class ProductDetailsPageCest
      *
      * @param AcceptanceTester $I
      */
-    public function multidimensionalVariantsInLists(AcceptanceTester $I)
+    public function selectMultidimensionalVariantsInLists(AcceptanceTester $I)
     {
         $I->wantToTest('multidimensional variants functionality in lists');
 
@@ -459,7 +459,7 @@ class ProductDetailsPageCest
      * @param AcceptanceTester $I
      * @param ProductNavigation $productNavigation
      */
-    public function multidimensionalVariantsAndJavaScript(AcceptanceTester $I, ProductNavigation $productNavigation)
+    public function selectMultidimensionalVariantsAndJavaScript(AcceptanceTester $I, ProductNavigation $productNavigation)
     {
         $productNavigation->wantToTest('if after md variants selection in details page all other js are still working correctly');
 
@@ -536,7 +536,7 @@ class ProductDetailsPageCest
      *
      * @param AcceptanceTester $I
      */
-    public function multidimensionalVariantsAreOff(AcceptanceTester $I)
+    public function selectProductIfMultidimensionalVariantsAreOff(AcceptanceTester $I)
     {
         $I->wantToTest('multidimensional variants functionality is disabled');
 
@@ -596,7 +596,7 @@ class ProductDetailsPageCest
      *
      * @param AcceptanceTester $I
      */
-    public function productPriceA(AcceptanceTester $I)
+    public function checkProductPriceA(AcceptanceTester $I)
     {
         $I->wantToTest('product price A');
 
@@ -673,7 +673,7 @@ class ProductDetailsPageCest
      *
      * @param AcceptanceTester $I
      */
-    public function productPriceC(AcceptanceTester $I)
+    public function checkProductPriceC(AcceptanceTester $I)
     {
         $I->wantToTest('product price C and amount price discount added to this price');
 
@@ -733,7 +733,7 @@ class ProductDetailsPageCest
      *
      * @param AcceptanceTester $I
      */
-    public function productPriceB(AcceptanceTester $I)
+    public function checkProductPriceB(AcceptanceTester $I)
     {
         $I->wantToTest('product price B');
 
@@ -786,7 +786,7 @@ class ProductDetailsPageCest
      * @param AcceptanceTester  $I
      * @param ProductNavigation $productNavigation
      */
-    public function productAmountPrice(AcceptanceTester $I, ProductNavigation $productNavigation)
+    public function checkProductAmountPrice(AcceptanceTester $I, ProductNavigation $productNavigation)
     {
         $I->wantToTest('product amount price');
 

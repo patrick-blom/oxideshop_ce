@@ -16,7 +16,7 @@ class UserRegistrationCest
      * @param AcceptanceTester $I
      * @param UserRegistration $userRegistration
      */
-    public function standardUserRegistrationFrontend(AcceptanceTester $I, UserRegistration $userRegistration)
+    public function registerStandardUserInFrontend(AcceptanceTester $I, UserRegistration $userRegistration)
     {
         $I->wantToTest('simple user account opening');
 
@@ -40,7 +40,7 @@ class UserRegistrationCest
      * @param Start            $start
      * @param UserRegistration $userRegistration
      */
-    public function standardUserRegistrationAndNewsletter(Start $start, UserRegistration $userRegistration)
+    public function registerUserForNewsletterAndShop(Start $start, UserRegistration $userRegistration)
     {
         $start->wantToTest('the user standard registration and the newsletter subscription with the same email');
 

@@ -13,7 +13,7 @@ class ProductCompareCest
      * @param AcceptanceTester  $I
      * @param ProductNavigation $productNavigation
      */
-    public function enabledProductCompare(AcceptanceTester $I, ProductNavigation $productNavigation)
+    public function enableProductCompare(AcceptanceTester $I, ProductNavigation $productNavigation)
     {
         $I->wantToTest('if product compare functionality is enabled');
 
@@ -58,7 +58,7 @@ class ProductCompareCest
      * @param Start              $I
      * @param ProductNavigation  $productNavigation
      */
-    public function userCompareList(Start $I, ProductNavigation $productNavigation)
+    public function addProductToUserCompareList(Start $I, ProductNavigation $productNavigation)
     {
         $I->wantToTest('user product compare list functionality');
 
@@ -164,7 +164,7 @@ class ProductCompareCest
      * @param Start             $I
      * @param ProductNavigation $productNavigation
      */
-    public function disabledProductCompare(Start $I, ProductNavigation $productNavigation)
+    public function disableProductCompare(Start $I, ProductNavigation $productNavigation)
     {
         $I->wantToTest('if product compare functionality is correctly disabled');
 

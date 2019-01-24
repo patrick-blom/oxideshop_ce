@@ -14,7 +14,7 @@ class GiftRegistryCest
      * @param AcceptanceTester  $I
      * @param ProductNavigation $productNavigation
      */
-    public function enabledGiftRegistry(AcceptanceTester $I, ProductNavigation $productNavigation)
+    public function enableGiftRegistry(AcceptanceTester $I, ProductNavigation $productNavigation)
     {
         $I->wantToTest('if product gift registry functionality is enabled');
 
@@ -66,7 +66,7 @@ class GiftRegistryCest
      * @param Start             $I
      * @param ProductNavigation $productNavigation
      */
-    public function userGiftRegistry(Start $I, ProductNavigation $productNavigation)
+    public function addProductToUserGiftRegistry(Start $I, ProductNavigation $productNavigation)
     {
         $I->wantToTest('user gift registry functionality');
 
@@ -111,7 +111,7 @@ class GiftRegistryCest
      * @param Start             $I
      * @param ProductNavigation $productNavigation
      */
-    public function makingPublicUserGiftRegistry(Start $I, ProductNavigation $productNavigation)
+    public function makeUserGiftRegistryPublic(Start $I, ProductNavigation $productNavigation)
     {
         $I->wantToTest('user gift registry functionality setting it as searchable and public');
 
@@ -177,7 +177,7 @@ class GiftRegistryCest
      * @param Start             $I
      * @param ProductNavigation $productNavigation
      */
-    public function disabledUserGiftRegistry(Start $I, ProductNavigation $productNavigation)
+    public function disableUserGiftRegistry(Start $I, ProductNavigation $productNavigation)
     {
         $I->wantToTest('disabled user gift registry via performance options');
 

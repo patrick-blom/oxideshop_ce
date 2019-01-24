@@ -11,7 +11,7 @@ class UserAccountCest
      *
      * @param AcceptanceTester $I
      */
-    public function userLoginInFrontend(AcceptanceTester $I)
+    public function loginUserInFrontend(AcceptanceTester $I)
     {
         $I->wantToTest('user login (popup in top of the page)');
 
@@ -38,7 +38,7 @@ class UserAccountCest
      *
      * @param AcceptanceTester $I
      */
-    public function userAccountChangePassword(AcceptanceTester $I)
+    public function changeUserAccountPassword(AcceptanceTester $I)
     {
         $I->wantTo('change user password in my account navigation');
 
@@ -89,7 +89,7 @@ class UserAccountCest
      *
      * @param AcceptanceTester $I
      */
-    public function userPasswordReminder(AcceptanceTester $I)
+    public function sendUserPasswordReminder(AcceptanceTester $I)
     {
         $I->wantToTest('user password reminder in my account navigation');
 
@@ -120,7 +120,7 @@ class UserAccountCest
      *
      * @param AcceptanceTester $I
      */
-    public function userChangeEmailInBillingAddress(AcceptanceTester $I)
+    public function changeUserEmailInBillingAddress(AcceptanceTester $I)
     {
         $I->wantTo('change user email in my account');
 
@@ -157,7 +157,7 @@ class UserAccountCest
      *
      * @param Start $I
      */
-    public function newsletterSubscriptionInUserAccount(Start $I)
+    public function subscribeNewsletterInUserAccount(Start $I)
     {
         $I->wantToTest('newsletter subscription in my account navigation');
 
@@ -185,7 +185,7 @@ class UserAccountCest
      *
      * @param Start $I
      */
-    public function userBillingAddress(Start $I)
+    public function changeUserBillingAddress(Start $I)
     {
         $I->wantToTest('user billing address in my account');
 
@@ -229,7 +229,7 @@ class UserAccountCest
      *
      * @param Start $I
      */
-    public function userShippingAddress(Start $I)
+    public function modifyUserShippingAddress(Start $I)
     {
         $I->wantToTest('user shipping address in my account');
 

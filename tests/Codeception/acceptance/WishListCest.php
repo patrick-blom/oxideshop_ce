@@ -14,7 +14,7 @@ class WishListCest
      * @param AcceptanceTester  $I
      * @param ProductNavigation $productNavigation
      */
-    public function enabledWishList(AcceptanceTester $I, ProductNavigation $productNavigation)
+    public function enableWishList(AcceptanceTester $I, ProductNavigation $productNavigation)
     {
         $I->wantToTest('if product compare functionality is enabled');
 
@@ -65,7 +65,7 @@ class WishListCest
      *
      * @param Start $I
      */
-    public function userWishList(Start $I, ProductNavigation $productNavigation)
+    public function addProductToUserWishList(Start $I, ProductNavigation $productNavigation)
     {
         $I->wantToTest('user wish list functionality');
 
@@ -107,7 +107,7 @@ class WishListCest
      *
      * @param Start $I
      */
-    public function userWishListAddingVariant(Start $I, ProductNavigation $productNavigation)
+    public function addVariantToUserWishList(Start $I, ProductNavigation $productNavigation)
     {
         $I->wantToTest('user wish list functionality, if a variant of product was added');
 
