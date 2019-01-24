@@ -1,8 +1,13 @@
 <?php
+/**
+ * Copyright © OXID eSales AG. All rights reserved.
+ * See LICENSE file for license details.
+ */
+
 namespace OxidEsales\EshopCommunity\Tests\Codeception;
 
 use OxidEsales\Codeception\Page\Home;
-use OxidEsales\Codeception\Page\UserOrderHistory;
+use OxidEsales\Codeception\Page\Account\UserOrderHistory;
 use OxidEsales\Codeception\Module\Translation\Translator;
 
 class MainCest

@@ -1,7 +1,12 @@
 <?php
+/**
+ * Copyright © OXID eSales AG. All rights reserved.
+ * See LICENSE file for license details.
+ */
+
 namespace OxidEsales\EshopCommunity\Tests\Codeception\Step\Acceptance;
 
-use OxidEsales\Codeception\Page\UserCheckout;
+use OxidEsales\Codeception\Page\Checkout\UserCheckout;
 use OxidEsales\Codeception\Module\Translation\Translator;
 
 class UserRegistrationInCheckout extends \OxidEsales\EshopCommunity\Tests\Codeception\AcceptanceTester
