@@ -82,38 +82,18 @@ class ModuleList extends \OxidEsales\Eshop\Core\Base
             $aModulePaths = $this->extractModulePaths();
         }
 
-        $aDisabledModules = $this->getDisabledModules();
-        if (is_array($aDisabledModules) && count($aDisabledModules) > 0 && count($aModulePaths) > 0) {
-            $aModulePaths = array_diff_key($aModulePaths, array_flip($aDisabledModules));
-        }
-
         return $aModulePaths;
     }
 
     /**
      * Get disabled module paths
      *
+     * @deprecated since v6.2.0 (2019-01-25); aDisabledModules is not filled any longer and this method will always return an empty array
      * @return array
      */
     public function getDisabledModuleInfo()
     {
-        $aDisabledModules = $this->getDisabledModules();
-        $aModulePaths = [];
-
-        if (is_array($aDisabledModules) && count($aDisabledModules) > 0) {
-            $aModulePaths = $this->getModuleConfigParametersByKey(static::MODULE_KEY_PATHS);
-
-            // Extract module paths from extended classes
-            if (!is_array($aModulePaths) || count($aModulePaths) < 1) {
-                $aModulePaths = $this->extractModulePaths();
-            }
-
-            if (is_array($aModulePaths) || count($aModulePaths) > 0) {
-                $aModulePaths = array_intersect_key($aModulePaths, array_flip($aDisabledModules));
-            }
-        }
-
-        return $aModulePaths;
+        return [];
     }
 
     /**
@@ -140,11 +120,12 @@ class ModuleList extends \OxidEsales\Eshop\Core\Base
     /**
      * Get disabled module id's
      *
+     * @deprecated since v6.2.0 (2019-01-25); aDisabledModules is not filled any longer and this method will always return an empty array
      * @return array
      */
     public function getDisabledModules()
     {
-        return (array) $this->getConfig()->getConfigParam('aDisabledModules');
+        return [];
     }
 
     /**
@@ -219,38 +200,12 @@ class ModuleList extends \OxidEsales\Eshop\Core\Base
      * aModules has all extended classes
      * aModulePaths has module id to main path array
      *
+     * @deprecated since v6.2.0 (2019-01-25); aDisabledModules is not filled any longer and this method will always return an empty array
      * @return array
      */
     public function getDisabledModuleClasses()
     {
-        $disabledModules = $this->getDisabledModules();
-        $disabledModuleClasses = [];
-        if (isset($disabledModules) && is_array($disabledModules)) {
-            //get all disabled module paths
-            $extensions = $this->getModuleConfigParametersByKey(static::MODULE_KEY_EXTENSIONS);
-            $modules = $this->getModulesWithExtendedClass();
-            $modulePaths = $this->getModuleConfigParametersByKey(static::MODULE_KEY_PATHS);
-
-            foreach ($disabledModules as $moduleId) {
-                if (!array_key_exists($moduleId, $extensions)) {
-                    $path = $modulePaths[$moduleId];
-                    if (!isset($path)) {
-                        $path = $moduleId;
-                    }
-                    foreach ($modules as $moduleClasses) {
-                        foreach ($moduleClasses as $moduleClass) {
-                            if (strpos($moduleClass, $path . "/") === 0) {
-                                $disabledModuleClasses[] = $moduleClass;
-                            }
-                        }
-                    }
-                } else {
-                    $disabledModuleClasses = array_merge($disabledModuleClasses, $extensions[$moduleId]);
-                }
-            }
-        }
-
-        return $disabledModuleClasses;
+        return [];
     }
 
     /**
@@ -434,19 +389,6 @@ class ModuleList extends \OxidEsales\Eshop\Core\Base
         $aUpdatedExtensionsChains = $this->buildModuleChains($aUpdatedExtensions);
 
         $this->getConfig()->saveShopConfVar('aarr', 'aModules', $aUpdatedExtensionsChains);
-    }
-
-    /**
-     * Removes extension from disabled modules array
-     *
-     * @param array $aDeletedExtIds Deleted extension id's of array
-     */
-    protected function _removeFromDisabledModulesArray($aDeletedExtIds)
-    {
-        $oConfig = $this->getConfig();
-        $aDisabledExtensionIds = $this->getDisabledModules();
-        $aDisabledExtensionIds = array_diff($aDisabledExtensionIds, $aDeletedExtIds);
-        $oConfig->saveShopConfVar('arr', 'aDisabledModules', $aDisabledExtensionIds);
     }
 
     /**

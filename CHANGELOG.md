@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [6.5.0] - Unreleased
+
+### Deprecated
+- `\OxidEsales\EshopCommunity\Core\Module\ModuleList::getDisabledModules`
+- `\OxidEsales\EshopCommunity\Core\Module\ModuleList::getDisabledModuleClasses`
+- `\OxidEsales\EshopCommunity\Core\Module\ModuleList::getDisabledModuleClasses`
+
 ## [6.4.0] - Unreleased
 
 ### Fixed
