@@ -19,9 +19,12 @@ class GiftRegistryCest
      * @param AcceptanceTester  $I
      * @param ProductNavigation $productNavigation
      */
-    public function enableGiftRegistry(AcceptanceTester $I, ProductNavigation $productNavigation)
+    public function addProductToUserGiftRegistry(AcceptanceTester $I, ProductNavigation $productNavigation)
     {
         $I->wantToTest('if product gift registry functionality is enabled');
+
+        //(Use gift registry) is enabled again
+        $I->updateConfigInDatabase('bl_showWishlist', true);
 
         $productData = [
             'id' => 1000,
@@ -39,8 +42,9 @@ class GiftRegistryCest
 
         $detailsPage = $detailsPage->openAccountMenu()
             ->checkGiftRegistryItemCount(0)
-            ->closeAccountMenu()
-            ->addProductToGiftRegistryList()
+            ->closeAccountMenu();
+
+        $detailsPage = $detailsPage->addProductToGiftRegistryList()
             ->openAccountMenu()
             ->checkGiftRegistryItemCount(1)
             ->closeAccountMenu();
@@ -54,44 +58,7 @@ class GiftRegistryCest
         $I->see(Translator::translate('MY_GIFT_REGISTRY'), $userAccountPage::$dashboardGiftRegistryPanelHeader);
         $I->see(Translator::translate('PRODUCT').' 1', $userAccountPage::$dashboardGiftRegistryPanelContent);
 
-        //open details page
-        $detailsPage = $productNavigation->openProductDetailsPage($productData['id']);
-        $I->see($productData['title']);
-
-        $detailsPage->removeProductFromGiftRegistryList()
-            ->openAccountMenu()
-            ->checkGiftRegistryItemCount(0)
-            ->closeAccountMenu();
-    }
-
-    /**
-     * @group myAccount
-     * @group giftRegistry
-     *
-     * @param Start             $I
-     * @param ProductNavigation $productNavigation
-     */
-    public function addProductToUserGiftRegistry(Start $I, ProductNavigation $productNavigation)
-    {
-        $I->wantToTest('user gift registry functionality');
-
-        $productData = [
-            'id' => 1000,
-            'title' => 'Test product 0 [EN] šÄßüл',
-            'desc' => 'Test product 0 short desc [EN] šÄßüл',
-            'price' => '50,00 € *'
-        ];
-        $userData = $this->getExistingUserData();
-
-        //open details page
-        $detailsPage = $productNavigation->openProductDetailsPage($productData['id']);
-        $I->see($productData['title']);
-
-        //add to gift registry and open gift registry page
-        $giftRegistryPage = $detailsPage->loginUser($userData['userLoginName'], $userData['userPassword'])
-            ->addProductToGiftRegistryList()
-            ->openAccountPage()
-            ->openGiftRegistryPage()
+        $giftRegistryPage = $userAccountPage->openGiftRegistryPage()
             ->seeProductData($productData);
 
         //open product details page
@@ -104,6 +71,9 @@ class GiftRegistryCest
 
         $giftRegistryPage->removeFromGiftRegistry(1);
         $I->see(Translator::translate('GIFT_REGISTRY_EMPTY'));
+        $giftRegistryPage->openAccountMenu()
+            ->checkGiftRegistryItemCount(0)
+            ->closeAccountMenu();
 
         $I->deleteFromDatabase('oxuserbaskets', ['oxuserid' => 'testuser']);
         $I->clearShopCache();
@@ -119,6 +89,9 @@ class GiftRegistryCest
     public function makeUserGiftRegistryPublic(Start $I, ProductNavigation $productNavigation)
     {
         $I->wantToTest('user gift registry functionality setting it as searchable and public');
+
+        //(Use gift registry) is enabled again
+        $I->updateConfigInDatabase('bl_showWishlist', true);
 
         $productData = [
             'id' => 1000,
@@ -138,10 +111,11 @@ class GiftRegistryCest
             ->addProductToGiftRegistryList()
             ->openUserGiftRegistryPage();
 
-        //making gift registry searchable
+        //making gift registry searchable and logout
         $giftRegistryPage = $giftRegistryPage->makeListSearchable()
-            ->logoutUser()
-            ->loginUser($adminUserData['userLoginName'], $adminUserData['userPassword'])
+            ->logoutUser();
+        //login with different user and search for this list
+        $giftRegistryPage = $giftRegistryPage->loginUser($adminUserData['userLoginName'], $adminUserData['userPassword'])
             ->searchForGiftRegistry($userData['userLoginName']);
         $I->see(Translator::translate('GIFT_REGISTRY_SEARCH_RESULTS'));
         $I->see(Translator::translate('GIFT_REGISTRY_OF') .' '. $userData['userName'] .' '. $userData['userLastName']);
@@ -156,12 +130,14 @@ class GiftRegistryCest
             ->logoutUser()
             ->loginUser($userData['userLoginName'], $userData['userPassword']);
         $I->see(Translator::translate('MESSAGE_MAKE_GIFT_REGISTRY_PUBLISH'));
-        $giftRegistryPage = $giftRegistryPage->makeListNotSearchable()
-            ->logoutUser()
+        $giftRegistryPage = $giftRegistryPage->makeListNotSearchable();
+
+        $giftRegistryPage = $giftRegistryPage->logoutUser()
             ->loginUser($adminUserData['userLoginName'], $adminUserData['userPassword'])
             ->searchForGiftRegistry($userData['userLoginName']);
         $I->see(Translator::translate('MESSAGE_SORRY_NO_GIFT_REGISTRY'));
 
+        //send notification about gift registry
         $giftRegistryPage = $giftRegistryPage->logoutUser()
             ->loginUser($userData['userLoginName'], $userData['userPassword'])
             ->sendGiftRegistryEmail(
@@ -214,7 +190,7 @@ class GiftRegistryCest
         $I->dontSee(Translator::translate('MY_GIFT_REGISTRY'), $accountPage::$giftRegistryLink);
 
         //(Use gift registry) is enabled again
-        $I->cleanUp();
+        $I->updateConfigInDatabase('bl_showWishlist', true);
 
     }
 

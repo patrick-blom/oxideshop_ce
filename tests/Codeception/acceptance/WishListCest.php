@@ -19,7 +19,7 @@ class WishListCest
      * @param AcceptanceTester  $I
      * @param ProductNavigation $productNavigation
      */
-    public function enableWishList(AcceptanceTester $I, ProductNavigation $productNavigation)
+    public function addProductToUserWishList(AcceptanceTester $I, ProductNavigation $productNavigation)
     {
         $I->wantToTest('if product compare functionality is enabled');
 
@@ -54,56 +54,22 @@ class WishListCest
         $I->see(Translator::translate('MY_WISH_LIST'));
         $I->see(Translator::translate('PRODUCT').' 1');
 
-        //open details page
-        $detailsPage = $productNavigation->openProductDetailsPage($productData['id']);
-        $I->see($productData['title']);
-
-        $detailsPage->removeFromWishList()
-            ->openAccountMenu()
-            ->checkWishListItemCount(0)
-            ->closeAccountMenu();
-    }
-
-    /**
-     * @group myAccount
-     * @group wishList
-     *
-     * @param Start $I
-     */
-    public function addProductToUserWishList(Start $I, ProductNavigation $productNavigation)
-    {
-        $I->wantToTest('user wish list functionality');
-
-        $productData = [
-            'id' => 1000,
-            'title' => 'Test product 0 [EN] šÄßüл',
-            'desc' => 'Test product 0 short desc [EN] šÄßüл',
-            'price' => '50,00 €'
-        ];
-
-        $userData = $this->getExistingUserData();
-
-        $I->loginOnStartPage($userData['userLoginName'], $userData['userPassword']);
-
-        //open details page
-        $detailsPage = $productNavigation->openProductDetailsPage($productData['id']);
-        $detailsPage = $detailsPage->addToWishList()
-            ->openAccountMenu()
-            ->checkWishListItemCount(1)
-            ->closeAccountMenu()
-            ->openUserWishListPage()
+        $userAccountPage->openWishListPage()
             ->seeProductData($productData)
             ->openProductDetailsPage(1);
         $I->see($productData['title'], $detailsPage::$productTitle);
 
-        $wishListPage = $detailsPage->openAccountPage()
-            ->openWishListPage()
+        $wishListPage = $detailsPage->openUserWishListPage()
             ->addProductToBasket(1, 2);
         $I->see(2, $wishListPage::$miniBasketMenuElement);
         $wishListPage = $wishListPage->removeProductFromList(1);
 
         $I->see(Translator::translate('PAGE_TITLE_ACCOUNT_NOTICELIST'), $wishListPage::$headerTitle);
         $I->see(Translator::translate('WISH_LIST_EMPTY'));
+
+        $wishListPage->openAccountMenu()
+            ->checkWishListItemCount(0)
+            ->closeAccountMenu();
     }
 
     /**
