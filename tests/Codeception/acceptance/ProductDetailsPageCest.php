@@ -380,14 +380,20 @@ class ProductDetailsPageCest
         $detailsPage->selectVariant(3, 'lether');
 
         //assert product
-        $productData = [
+        $productData2 = [
             'id' => '10014-1-1',
             'title' => '14 EN product šÄßüл S | black | lether',
             'desc' => '',
             'price' => '25,00 € *'
         ];
-        $detailsPage->seeProductData($productData)
+        $detailsPage->seeProductData($productData2)
             ->checkIfProductIsBuyable();
+
+        //open details page
+        $detailsPage = $productNavigation->openProductDetailsPage($productData['id']);
+
+        //assert product
+        $detailsPage->seeProductData($productData);
 
         //select a variant of the product
         $detailsPage = $detailsPage->selectVariant(2, 'white')
@@ -396,27 +402,33 @@ class ProductDetailsPageCest
         $detailsPage = $detailsPage->selectVariant(1, 'S');
 
         //assert product
-        $productData = [
+        $productData3 = [
             'id' => '10014-1-3',
             'title' => '14 EN product šÄßüл S | white',
             'desc' => '',
             'price' => '15,00 € *'
         ];
-        $detailsPage->seeProductData($productData)
+        $detailsPage->seeProductData($productData3)
             ->checkIfProductIsBuyable();
+
+        //open details page
+        $detailsPage = $productNavigation->openProductDetailsPage($productData['id']);
+
+        //assert product
+        $detailsPage->seeProductData($productData);
 
         $detailsPage->selectVariant(2, 'black')
             ->selectVariant(3, 'lether')
             ->selectVariant(1, 'L');
 
         //assert product
-        $productData = [
+        $productData4 = [
             'id' => '10014-3-1',
             'title' => '14 EN product šÄßüл L | black | lether',
             'desc' => '',
             'price' => '15,00 € *'
         ];
-        $detailsPage->seeProductData($productData)
+        $detailsPage->seeProductData($productData4)
             ->checkIfProductIsBuyable();
 
         $detailsPage = $detailsPage->addProductToBasket(2);
