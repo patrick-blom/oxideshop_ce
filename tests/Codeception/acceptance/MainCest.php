@@ -43,6 +43,7 @@ class MainCest
 
         // login to shop
         $I->amOnPage(UserOrderHistory::$URL);
+        $I->waitForElement('h1', 10);
         $I->see(Translator::translate('LOGIN'), 'h1');
 
         $I->fillField(UserOrderHistory::$loginUserNameField,'example_test@oxid-esales.dev');

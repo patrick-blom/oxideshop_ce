@@ -9,6 +9,7 @@ namespace OxidEsales\EshopCommunity\Tests\Codeception\Step\Acceptance;
 use OxidEsales\Codeception\Page\Checkout\UserCheckout;
 use OxidEsales\Codeception\Page\Checkout\Basket as BasketPage;
 use OxidEsales\Codeception\Module\Translation\Translator;
+use OxidEsales\Codeception\Page\Header\MiniBasket;
 
 class Basket extends \OxidEsales\EshopCommunity\Tests\Codeception\AcceptanceTester
 {
@@ -26,6 +27,7 @@ class Basket extends \OxidEsales\EshopCommunity\Tests\Codeception\AcceptanceTest
         $params['am'] = $amount;
         $params['anid'] = $productId;
         $I->amOnPage('/index.php?'.http_build_query($params));
+        $I->waitForElement(MiniBasket::$miniBasketMenuElement);
     }
     /**
      * @param $productId
