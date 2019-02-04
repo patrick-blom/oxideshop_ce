@@ -30,7 +30,7 @@ class FormatPriceExtensionTest extends TestCase
      */
     public function testFormatPrice(): void
     {
-        $price = $this->formatPriceExtension->formatPrice(['price' => 100]);
+        $price = $this->formatPriceExtension->formatPrice(100, []);
         $this->assertEquals('100,00 €', $price);
     }
 }
