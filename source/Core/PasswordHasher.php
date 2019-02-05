@@ -6,6 +6,8 @@
 
 namespace OxidEsales\EshopCommunity\Core;
 
+use OxidEsales\EshopCommunity\Internal\Password\Service\PasswordHashServiceInterface;
+
 /**
  * Hash password together with salt, using set hash algorithm
  */
@@ -19,7 +21,7 @@ class PasswordHasher
     /**
      * Gets hasher.
      *
-     * @return \OxidEsales\Eshop\Core\Hasher
+     * @return \OxidEsales\Eshop\Core\Hasher|PasswordHashServiceInterface
      */
     protected function _getHasher()
     {
@@ -29,7 +31,7 @@ class PasswordHasher
     /**
      * Sets dependencies.
      *
-     * @param \OxidEsales\Eshop\Core\Hasher $oHasher hasher.
+     * @param \OxidEsales\Eshop\Core\Hasher|PasswordHashServiceInterface $oHasher hasher.
      */
     public function __construct($oHasher)
     {
@@ -46,6 +48,6 @@ class PasswordHasher
      */
     public function hash($sPassword, $sSalt)
     {
-        return $this->_getHasher()->hash($sPassword , ['salt' => $sSalt]);
+        return $this->_getHasher()->hash($sPassword, ['salt' => $sSalt]);
     }
 }
