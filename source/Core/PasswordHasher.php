@@ -6,6 +6,7 @@
 
 namespace OxidEsales\EshopCommunity\Core;
 
+use OxidEsales\EshopCommunity\Internal\Password\Exception\PasswordHashException;
 use OxidEsales\EshopCommunity\Internal\Password\Service\PasswordHashServiceInterface;
 
 /**
@@ -14,40 +15,62 @@ use OxidEsales\EshopCommunity\Internal\Password\Service\PasswordHashServiceInter
 class PasswordHasher
 {
     /**
-     * @var \oxHasher
+     * @var \OxidEsales\Eshop\Core\Hasher|PasswordHashServiceInterface
      */
-    private $_ohasher = null;
+    private $passwordHashService;
 
     /**
-     * Gets hasher.
+     * Returns password hash service
      *
      * @return \OxidEsales\Eshop\Core\Hasher|PasswordHashServiceInterface
      */
     protected function _getHasher()
     {
-        return $this->_ohasher;
+        return $this->passwordHashService;
     }
 
     /**
      * Sets dependencies.
      *
-     * @param \OxidEsales\Eshop\Core\Hasher|PasswordHashServiceInterface $oHasher hasher.
+     * @param \OxidEsales\Eshop\Core\Hasher|PasswordHashServiceInterface $passwordHashService
      */
-    public function __construct($oHasher)
+    public function __construct($passwordHashService)
     {
-        $this->_ohasher = $oHasher;
+        $this->passwordHashService = $passwordHashService;
     }
 
     /**
      * Hash password with a salt.
      *
-     * @param string $sPassword not hashed password.
-     * @param string $sSalt     salt string.
+     * @param string $password not hashed password.
+     * @param string $salt     salt string.
      *
      * @return string
      */
-    public function hash($sPassword, $sSalt)
+    public function hash($password, $salt): string
     {
-        return $this->_getHasher()->hash($sPassword, ['salt' => $sSalt]);
+        $passwordHashService = $this->_getHasher();
+
+        if ($passwordHashService instanceof Hasher) {
+            $hash =  $passwordHashService->hash($password.$salt);
+        } elseif ($passwordHashService instanceof PasswordHashServiceInterface) {
+            $options = $this->getOptionsForHashService($salt);
+
+            $hash =  $passwordHashService->hash($password, $options);
+        } else {
+            throw new PasswordHashException('Unsupported password hashing service: ' . get_class($passwordHashService));
+        }
+
+        return $hash;
+    }
+
+    /**
+     * @param string $salt
+     *
+     * @return array
+     */
+    private function getOptionsForHashService(string $salt): array
+    {
+        return ['salt' => $salt];
     }
 }
