@@ -127,6 +127,17 @@ class UserTest extends \OxidTestCase
                                           'kkpruef'  => '123456');
 
     /**
+     * @return int
+     */
+    public function disableDeprecatedErrors(): int
+    {
+        $originalErrorReporting = error_reporting();
+        error_reporting($originalErrorReporting & ~E_DEPRECATED);
+
+        return $originalErrorReporting;
+    }
+
+    /**
      * Tear down the fixture.
      *
      * @return null
@@ -2220,7 +2231,7 @@ class UserTest extends \OxidTestCase
      */
     public function testLogin_resetsActiveUser()
     {
-        $originalErrorReporting = error_reporting(E_ALL& ~E_DEPRECATED);
+        $originalErrorReporting = $this->disableDeprecatedErrors();
 
         try {
             $oUser = $this->getMock(\OxidEsales\Eshop\Application\Model\User::class, array("setUser"));
@@ -2241,7 +2252,7 @@ class UserTest extends \OxidTestCase
      */
     public function testLoginByPassingCustomerNumberNotAllowed()
     {
-        $originalErrorReporting = error_reporting(E_ALL& ~E_DEPRECATED);
+        $originalErrorReporting = $this->disableDeprecatedErrors();
         $exceptionThrown = false;
 
         try {
@@ -2267,7 +2278,7 @@ class UserTest extends \OxidTestCase
      */
     public function testLoginButUnableToLoadExceptionWillBeThrown()
     {
-        $originalErrorReporting = error_reporting(E_ALL& ~E_DEPRECATED);
+        $originalErrorReporting = $this->disableDeprecatedErrors();
         $exceptionThrown = false;
 
         try {
@@ -2295,7 +2306,7 @@ class UserTest extends \OxidTestCase
      */
     public function testLoginOxidNotSet()
     {
-        $originalErrorReporting = error_reporting(E_ALL& ~E_DEPRECATED);
+        $originalErrorReporting = $this->disableDeprecatedErrors();
         $exceptionThrown = false;
 
         try {
@@ -2326,7 +2337,7 @@ class UserTest extends \OxidTestCase
      */
     public function testLoginCookieMustBeSet()
     {
-        $originalErrorReporting = error_reporting(E_ALL& ~E_DEPRECATED);
+        $originalErrorReporting = $this->disableDeprecatedErrors();
         $exceptionThrown = false;
 
         try {
@@ -2354,7 +2365,7 @@ class UserTest extends \OxidTestCase
      */
     public function testLoginCookie_disabled()
     {
-        $originalErrorReporting = error_reporting(E_ALL& ~E_DEPRECATED);
+        $originalErrorReporting = $this->disableDeprecatedErrors();
 
         try {
             oxTestModules::addFunction('oxUtilsServer', 'setUserCookie', '{ throw new Exception( "cookie is set" ); }');
