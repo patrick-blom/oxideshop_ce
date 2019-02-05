@@ -35,11 +35,42 @@ class PasswordHashBcryptServiceTest extends TestCase
     {
         $password = 'secret';
 
-        $passwordHashService = new PasswordHashBcryptService(['cost' => 5]);
-        $hash = $passwordHashService->hash($password);
+        $passwordHashService = new PasswordHashBcryptService();
+        $hash = $passwordHashService->hash($password, ['cost' => 5]);
         $info = password_get_info($hash);
 
         $this->assertSame(5, $info['options']['cost']);
+    }
+
+    /**
+     * @dataProvider invalidCostOptionValueDataProvider
+     *
+     * @param mixed $invalidCostOption
+     *
+     * @throws \OxidEsales\EshopCommunity\Internal\Password\Exception\PasswordHashException
+     */
+    public function testHashWithInvalidCostOptionValue($invalidCostOption)
+    {
+        $this->expectException(\PHPUnit\Framework\Error\Warning::class);
+
+        $password = 'secret';
+
+        $passwordHashService = new PasswordHashBcryptService();
+        $passwordHashService->hash($password, ['cost' => $invalidCostOption]);
+    }
+
+    /**
+     * @return array
+     */
+    public function invalidCostOptionValueDataProvider(): array
+    {
+        return [
+            [-5],
+            [0],
+            [[10]],
+            ['string'],
+            [new \stdClass()],
+        ];
     }
 
     /**

@@ -18,20 +18,19 @@ class PasswordHashServiceFactory implements PasswordHashServiceFactoryInterface
 
     /**
      * @param string $algorithm
-     * @param array  $options
      *
      * @throws PasswordHashException
      *
      * @return mixed
      */
-    public function getPasswordHashService(string $algorithm, array $options): PasswordHashServiceInterface
+    public function getPasswordHashService(string $algorithm): PasswordHashServiceInterface
     {
         $map = $this->getAlorithmToClassMap();
-        if (false === array_key_exists($algorithm, $map)) {
+        if (false === isset($map[$algorithm])) {
             throw new PasswordHashException('The requested hashing algorithm is not supported: ' . $algorithm);
         }
 
-        return new $map[$algorithm]($options);
+        return new $map[$algorithm]();
     }
 
     /**

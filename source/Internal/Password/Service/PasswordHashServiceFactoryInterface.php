@@ -13,9 +13,8 @@ interface PasswordHashServiceFactoryInterface
 {
     /**
      * @param string $algorithm
-     * @param array  $options
      *
      * @return PasswordHashServiceInterface
      */
-    public function getPasswordHashService(string $algorithm, array $options): PasswordHashServiceInterface;
+    public function getPasswordHashService(string $algorithm): PasswordHashServiceInterface;
 }

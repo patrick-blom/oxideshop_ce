@@ -15,10 +15,11 @@ class PasswordHashSha512Service implements PasswordHashServiceInterface
      * Creates a password hash
      *
      * @param string $password
+     * @param array  $options
      *
      * @return string
      */
-    public function hash(string $password): string
+    public function hash(string $password, array $options = []): string
     {
         return hash('sha512', $password);
     }

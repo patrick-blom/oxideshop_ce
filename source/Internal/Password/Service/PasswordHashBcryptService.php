@@ -14,31 +14,18 @@ use OxidEsales\EshopCommunity\Internal\Password\Exception\PasswordHashException;
 class PasswordHashBcryptService implements PasswordHashServiceInterface
 {
     /**
-     * @var array
-     */
-    private $options;
-
-    /**
-     * @param array $options
-     */
-    public function __construct(array $options = [])
-    {
-        $this->options = $options;
-    }
-
-    /**
      * Creates a password hash
      *
      * @param string $password
+     * @param array  $options
      *
      * @throws PasswordHashException
      *
      * @return string
-     *
      */
-    public function hash(string $password): string
+    public function hash(string $password, array $options = []): string
     {
-        if (false === $hash = password_hash($password, PASSWORD_BCRYPT, $this->options)) {
+        if (false === $hash = password_hash($password, PASSWORD_BCRYPT, $options)) {
             throw new PasswordHashException('The password could not have been hashed');
         }
 
