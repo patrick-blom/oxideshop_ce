@@ -46,6 +46,6 @@ class PasswordHasher
      */
     public function hash($sPassword, $sSalt)
     {
-        return $this->_getHasher()->hash($sPassword . $sSalt);
+        return $this->_getHasher()->hash($sPassword , ['salt' => $sSalt]);
     }
 }

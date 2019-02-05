@@ -510,7 +510,7 @@ class User extends \OxidEsales\Eshop\Core\Model\BaseModel
         );
 
         // processing birth date which came from output as array
-        if (is_array($this->oxuser__oxbirthdate->value)) {
+        if ($this->oxuser__oxbirthdate && is_array($this->oxuser__oxbirthdate->value)) {
             $this->oxuser__oxbirthdate = new \OxidEsales\Eshop\Core\Field(
                 $this->convertBirthday($this->oxuser__oxbirthdate->value),
                 \OxidEsales\Eshop\Core\Field::T_RAW
@@ -1268,8 +1268,8 @@ class User extends \OxidEsales\Eshop\Core\Model\BaseModel
         $salt = $database->getOne("SELECT `oxpasssalt` FROM `oxuser` WHERE  " . $userSelect . $shopSelect);
 
         $passwordServiceBridge = $this->getContainer()->get(PasswordServiceBridgeInterface::class);
-        $passwordHashService = $passwordServiceBridge->getPasswordHashService('sha512', []);
-        $passwordHash = $passwordHashService->hash($password . $salt);
+        $passwordHashService = $passwordServiceBridge->getPasswordHashService('sha512');
+        $passwordHash = $passwordHashService->hash($password. $salt);
 
         $passSelect = " oxuser.oxpassword = " . $database->quote($passwordHash);
 
@@ -1299,8 +1299,11 @@ class User extends \OxidEsales\Eshop\Core\Model\BaseModel
         $sShopSelect = $this->formQueryPartForAdminView($sShopID, $blAdmin);
 
         $sSalt = $oDb->getOne("SELECT `oxpasssalt` FROM `oxuser` WHERE  " . $sUserSelect . $sShopSelect);
-
-        $sPassSelect = " oxuser.oxpassword = " . $oDb->quote($this->encodePassword($sPassword, $sSalt));
+        if (false !== $sSalt) {
+            $sPassSelect = " oxuser.oxpassword = " . $oDb->quote($this->encodePassword($sPassword, $sSalt));
+        } else {
+            $sPassSelect = '1';
+        }
 
         $sSelect = "select `oxid` from oxuser where oxuser.oxactive = 1 and {$sPassSelect} and {$sUserSelect} {$sShopSelect} ";
 
@@ -1902,10 +1905,14 @@ class User extends \OxidEsales\Eshop\Core\Model\BaseModel
      *
      * @return string
      */
-    public function encodePassword($password, $salt)
+    public function encodePassword(string $password, $salt): string
     {
+        if (empty($salt)) {
+            trigger_error('Empty parameter "salt" is deprecated', E_USER_DEPRECATED);
+        }
+
         $passwordServiceBridge = $this->getContainer()->get(PasswordServiceBridgeInterface::class);
-        $passwordHashService = $passwordServiceBridge->getPasswordHashService('sha512', []);
+        $passwordHashService = $passwordServiceBridge->getPasswordHashService('bcrypt', []);
 
         $oHasher = oxNew(PasswordHasher::class, $passwordHashService);
 
@@ -1937,13 +1944,17 @@ class User extends \OxidEsales\Eshop\Core\Model\BaseModel
     /**
      * Checks if user entered password is the same as old
      *
-     * @param string $sNewPass new password
+     * @param string $password new password
      *
      * @return bool
      */
-    public function isSamePassword($sNewPass)
+    public function isSamePassword($password)
     {
-        return $this->encodePassword($sNewPass, $this->oxuser__oxpasssalt->value) == $this->oxuser__oxpassword->value;
+        $salt = $this->oxuser__oxpasssalt->value;
+        $newHash = $this->encodePassword($password, $salt);
+        $oldHash = $this->oxuser__oxpassword->value;
+
+        return  $newHash === $oldHash;
     }
 
     /**
@@ -2166,37 +2177,42 @@ class User extends \OxidEsales\Eshop\Core\Model\BaseModel
     /**
      * Initiates user login against data in DB.
      *
-     * @param string $sUser     User
-     * @param string $sPassword Password
-     * @param string $sShopID   Shop id
+     * @param string $userName User
+     * @param string $password Password
+     * @param string $shopID   Shop id
      *
      * @throws object
      */
-    protected function _dbLogin($sUser, $sPassword, $sShopID)
+    protected function _dbLogin(string $userName, $password, $shopID)
     {
-        $blOldHash = false;
-        $oDb = \OxidEsales\Eshop\Core\DatabaseProvider::getDb();
+        $isPasswordRehashingNecessary = false;
+        $database = \OxidEsales\Eshop\Core\DatabaseProvider::getDb();
 
         if ($this->_isDemoShop() && $this->isAdmin()) {
-            $sUserOxId = $oDb->getOne($this->_getDemoShopLoginQuery($sUser, $sPassword));
+            $userId = $database->getOne($this->_getDemoShopLoginQuery($userName, $password));
         } else {
-            $sUserOxId = $oDb->getOne($this->_getLoginQuery($sUser, $sPassword, $sShopID, $this->isAdmin()));
-            if (!$sUserOxId) {
-                $sUserOxId = $oDb->getOne($this->_getLoginQueryHashedWithMD5($sUser, $sPassword, $sShopID, $this->isAdmin()));
-                $blOldHash = true;
+            $userId = $database->getOne($this->_getLoginQuery($userName, $password, $shopID, $this->isAdmin()));
+            if (!$userId) {
+                $userId = $database->getOne($this->_getLoginQueryHashedWithSha512($userName, $password, $shopID, $this->isAdmin()));
+                if ($userId) {
+                    $isPasswordRehashingNecessary = true;
+                }
+            }
+            if (!$userId) {
+                $userId = $database->getOne($this->_getLoginQueryHashedWithMD5($userName, $password, $shopID, $this->isAdmin()));
+                if ($userId) {
+                    $isPasswordRehashingNecessary = true;
+                }
             }
         }
 
-        if ($sUserOxId) {
-            if (!$this->load($sUserOxId)) {
-                /** @var \OxidEsales\Eshop\Core\Exception\UserException $oEx */
-                $oEx = oxNew(\OxidEsales\Eshop\Core\Exception\UserException::class);
-                $oEx->setMessage('ERROR_MESSAGE_USER_NOVALIDLOGIN');
-                throw $oEx;
-            } elseif ($blOldHash && $this->getId()) {
-                $this->setPassword($sPassword);
-                $this->save();
-            }
+        if (!$this->load($userId)) {
+            throw oxNew(\OxidEsales\Eshop\Core\Exception\UserException::class, 'ERROR_MESSAGE_USER_NOVALIDLOGIN');
+        }
+
+        if ($isPasswordRehashingNecessary) {
+            $this->setPassword($password);
+            $this->save();
         }
     }
 

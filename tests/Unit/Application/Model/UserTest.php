@@ -484,21 +484,25 @@ class UserTest extends \OxidTestCase
 
     public function testIsSamePassword()
     {
-        $oUser = oxNew('oxUser');
+        $this->expectException(\PHPUnit\Framework\Error\Deprecated::class);
+
+        $user = oxNew(User::class);
 
         // plain password in db
-        $oUser->oxuser__oxpassword = new oxfield('aaa');
-        $this->assertFalse($oUser->isSamePassword('aaa'));
-        $this->assertFalse($oUser->isSamePassword('bbb'));
+        $user->oxuser__oxpassword = new Field('aaa');
+        $this->assertFalse($user->isSamePassword('aaa'));
+        $this->assertFalse($user->isSamePassword('bbb'));
 
         // hashed
-        $oUser->setPassword('xxx');
-        $this->assertTrue($oUser->isSamePassword('xxx'));
-        $this->assertFalse($oUser->isSamePassword('yyy'));
+        $user->setPassword('xxx');
+        $this->assertTrue($user->isSamePassword('xxx'));
+        $this->assertFalse($user->isSamePassword('yyy'));
     }
 
     public function testSetPassword()
     {
+        $this->expectException(\PHPUnit\Framework\Error\Deprecated::class);
+
         $oUser = oxNew('oxUser');
         $oUser->setPassword('xxx');
         $this->assertFalse('' == $oUser->oxuser__oxpassword->value);
@@ -510,9 +514,11 @@ class UserTest extends \OxidTestCase
 
     public function testEncodePassword()
     {
+        $this->expectException(\PHPUnit\Framework\Error\Deprecated::class);
+
         $sPassword = 'xxx';
         $sSalt = 'yyy';
-        $sEncPass = hash('sha512', $sPassword . $sSalt);
+        $sEncPass = password_hash($sPassword, PASSWORD_BCRYPT, ['salt' => $sSalt]);
 
         $oUser = oxNew('oxUser');
         $this->assertEquals($sEncPass, $oUser->encodePassword($sPassword, $sSalt));
@@ -520,6 +526,8 @@ class UserTest extends \OxidTestCase
 
     public function testEncodePasswordIsDeterministic()
     {
+        $this->expectException(\PHPUnit\Framework\Error\Deprecated::class);
+
         $password = 'secret';
         $salt = 'salt';
         $user = new User();
@@ -1599,6 +1607,8 @@ class UserTest extends \OxidTestCase
 
     public function testCreateUserMallUsersTryingToCreateSameUserAgainShouldThrowAnExcp()
     {
+        $this->expectException(\PHPUnit\Framework\Error\Deprecated::class);
+
         $oUser = $this->createUser();
         $oUser->oxuser__oxusername = new oxField('testuser' . time());
         $oUser->setPassword('xxx');
@@ -2079,6 +2089,8 @@ class UserTest extends \OxidTestCase
      */
     public function testLoadAdminUser()
     {
+        $this->expectException(\PHPUnit\Framework\Error\Deprecated::class);
+
         oxAddClassModule(\OxidEsales\EshopCommunity\Tests\Unit\Application\Model\UserTest_oxUtilsServerHelper::class, 'oxUtilsServer');
         //not logged in
         $oUser = oxNew('oxUser');
@@ -2108,6 +2120,8 @@ class UserTest extends \OxidTestCase
      */
     public function testGetUser()
     {
+        $this->expectException(\PHPUnit\Framework\Error\Deprecated::class);
+
         //not logged in
         $oActUser = oxNew('oxUser');
         $this->assertFalse($oActUser->loadActiveUser());
@@ -2127,6 +2141,8 @@ class UserTest extends \OxidTestCase
      */
     public function testGetUserNotAdmin()
     {
+        $this->expectException(\PHPUnit\Framework\Error\Deprecated::class);
+
         oxAddClassModule(\OxidEsales\EshopCommunity\Tests\Unit\Application\Model\UserTest_oxUtilsServerHelper2::class, 'oxutilsserver');
         $sShopId = $this->getConfig()->getShopId();
         $sTempPassword = oxADMIN_PASSWD;
@@ -2180,6 +2196,8 @@ class UserTest extends \OxidTestCase
      */
     public function testLogin_Logout()
     {
+        $this->expectException(\PHPUnit\Framework\Error\Deprecated::class);
+
         $oUser = oxNew('oxUser');
         $oUser->login(oxADMIN_LOGIN, oxADMIN_PASSWD);
         $this->assertEquals(oxRegistry::getSession()->getVariable('usr'), 'oxdefaultadmin');
@@ -2202,10 +2220,20 @@ class UserTest extends \OxidTestCase
      */
     public function testLogin_resetsActiveUser()
     {
-        $oUser = $this->getMock(\OxidEsales\Eshop\Application\Model\User::class, array("setUser"));
-        $oUser->expects($this->once())->method("setUser")->with($this->equalTo(null));
+        $originalErrorReporting = error_reporting(E_ALL& ~E_DEPRECATED);
 
-        $oUser->login(oxADMIN_LOGIN, oxADMIN_PASSWD);
+        try {
+            $oUser = $this->getMock(\OxidEsales\Eshop\Application\Model\User::class, array("setUser"));
+            $oUser->expects($this->once())->method("setUser")->with($this->equalTo(null));
+
+            $oUser->login(oxADMIN_LOGIN, oxADMIN_PASSWD);
+        } catch (\Throwable $throwable) {
+            error_reporting($originalErrorReporting);
+
+            throw $throwable;
+        } finally {
+            error_reporting($originalErrorReporting);
+        }
     }
 
     /**
@@ -2213,15 +2241,23 @@ class UserTest extends \OxidTestCase
      */
     public function testLoginByPassingCustomerNumberNotAllowed()
     {
-        $oUser = oxNew('oxUser');
-        try {
-            $oUser->login(1, oxADMIN_PASSWD);
-        } catch (Exception $oExcp) {
-            $this->assertEquals('ERROR_MESSAGE_USER_NOVALIDLOGIN', $oExcp->getMessage());
+        $originalErrorReporting = error_reporting(E_ALL& ~E_DEPRECATED);
 
-            return;
+        try {
+            $oUser = oxNew('oxUser');
+            try {
+                $oUser->login(1, oxADMIN_PASSWD);
+            } catch (Exception $oExcp) {
+                $this->assertEquals('ERROR_MESSAGE_USER_NOVALIDLOGIN', $oExcp->getMessage());
+            }
+            $this->fail('exception must be thrown');
+        } catch (\Throwable $throwable) {
+            error_reporting($originalErrorReporting);
+
+            throw $throwable;
+        } finally {
+            error_reporting($originalErrorReporting);
         }
-        $this->fail('exception must be thrown');
     }
 
     /**
@@ -2229,18 +2265,27 @@ class UserTest extends \OxidTestCase
      */
     public function testLoginButUnableToLoadExceptionWillBeThrown()
     {
-        $oUser = $this->getMock(\OxidEsales\Eshop\Application\Model\User::class, array('load'));
-        $oUser->expects($this->atLeastOnce())->method('load')->will($this->returnValue(false));
+        $originalErrorReporting = error_reporting(E_ALL& ~E_DEPRECATED);
+        $exceptionThrown = false;
 
         try {
-            $oUser->login(oxADMIN_LOGIN, oxADMIN_PASSWD);
-        } catch (Exception $oExcp) {
+            $oUser = $this->getMock(\OxidEsales\Eshop\Application\Model\User::class, array('load'));
+            $oUser->expects($this->atLeastOnce())->method('load')->will($this->returnValue(false));
 
-            $this->assertEquals('ERROR_MESSAGE_USER_NOVALIDLOGIN', $oExcp->getMessage());
+            try {
+                $oUser->login(oxADMIN_LOGIN, oxADMIN_PASSWD);
+            } catch (Exception $oExcp) {
+                $exceptionThrown = true;
+                $this->assertEquals('ERROR_MESSAGE_USER_NOVALIDLOGIN', $oExcp->getMessage());
+            }
+            $this->assertTrue($exceptionThrown, 'exception must be thrown due to problems loading user object');
+        } catch (\Throwable $throwable) {
+            error_reporting($originalErrorReporting);
 
-            return;
+            throw $throwable;
+        } finally {
+            error_reporting($originalErrorReporting);
         }
-        $this->fail('exception must be thrown due to problems loading user object');
     }
 
     /**
@@ -2248,17 +2293,30 @@ class UserTest extends \OxidTestCase
      */
     public function testLoginOxidNotSet()
     {
-        $oUser = $this->getMock(\OxidEsales\Eshop\Application\Model\User::class, array('load', '_ldapLogin'));
-        $oUser->expects($this->atLeastOnce())->method('load')->will($this->returnValue(true));
+        $originalErrorReporting = error_reporting(E_ALL& ~E_DEPRECATED);
+        $exceptionThrown = false;
 
         try {
-            $oUser->login(oxADMIN_LOGIN, oxADMIN_PASSWD);
-        } catch (Exception $oExcp) {
-            $this->assertEquals('ERROR_MESSAGE_USER_NOVALIDLOGIN', $oExcp->getMessage());
+            /** @var User $oUser */
+            $oUser = $this->getMockBuilder(\OxidEsales\Eshop\Application\Model\User::class)
+                ->setMethods(['load'])
+                ->getMock();
+            $oUser->method('load')->will($this->returnValue(false));
 
-            return;
+            try {
+                $oUser->login(oxADMIN_LOGIN, oxADMIN_PASSWD);
+            } catch (Exception $oExcp) {
+                $exceptionThrown = true;
+                $this->assertEquals('ERROR_MESSAGE_USER_NOVALIDLOGIN', $oExcp->getMessage());
+            }
+            $this->assertTrue($exceptionThrown, 'exception must be thrown due to problems loading user object');
+        } catch (\Throwable $throwable) {
+            error_reporting($originalErrorReporting);
+
+            throw $throwable;
+        } finally {
+            error_reporting($originalErrorReporting);
         }
-        $this->fail('exception must be thrown due to problems loading user object');
     }
 
     /**
@@ -2266,17 +2324,27 @@ class UserTest extends \OxidTestCase
      */
     public function testLoginCookieMustBeSet()
     {
-        oxTestModules::addFunction('oxUtilsServer', 'setUserCookie', '{ throw new Exception( "cookie is set" ); }');
+        $originalErrorReporting = error_reporting(E_ALL& ~E_DEPRECATED);
+        $exceptionThrown = false;
 
-        $oUser = oxNew('oxUser');
         try {
-            $this->assertTrue($oUser->login(oxADMIN_LOGIN, oxADMIN_PASSWD, true));
-        } catch (Exception $oExcp) {
-            $this->assertEquals("cookie is set", $oExcp->getMessage());
+            oxTestModules::addFunction('oxUtilsServer', 'setUserCookie', '{ throw new Exception( "cookie is set" ); }');
 
-            return;
+            $oUser = oxNew('oxUser');
+            try {
+                $this->assertTrue($oUser->login(oxADMIN_LOGIN, oxADMIN_PASSWD, true));
+            } catch (Exception $oExcp) {
+                $exceptionThrown = true;
+                $this->assertEquals("cookie is set", $oExcp->getMessage());
+            }
+            $this->assertTrue($exceptionThrown, 'forced exception must be thrown');
+        } catch (\Throwable $throwable) {
+            error_reporting($originalErrorReporting);
+
+            throw $throwable;
+        } finally {
+            error_reporting($originalErrorReporting);
         }
-        $this->fail('forced exception must be thrown');
     }
 
     /**
@@ -2284,17 +2352,26 @@ class UserTest extends \OxidTestCase
      */
     public function testLoginCookie_disabled()
     {
-        oxTestModules::addFunction('oxUtilsServer', 'setUserCookie', '{ throw new Exception( "cookie is set" ); }');
-        $this->getConfig()->setConfigParam('blShowRememberMe', 0);
+        $originalErrorReporting = error_reporting(E_ALL& ~E_DEPRECATED);
 
-        $oUser = oxNew('oxUser');
         try {
-            $this->assertTrue($oUser->login(oxADMIN_LOGIN, oxADMIN_PASSWD, true));
-        } catch (Exception $oExcp) {
-            $this->fail('Cookie should not be set, it\'s disabled.');
+            oxTestModules::addFunction('oxUtilsServer', 'setUserCookie', '{ throw new Exception( "cookie is set" ); }');
+            $this->getConfig()->setConfigParam('blShowRememberMe', 0);
 
-            return;
+            $oUser = oxNew('oxUser');
+            try {
+                $this->assertTrue($oUser->login(oxADMIN_LOGIN, oxADMIN_PASSWD, true));
+            } catch (Exception $oExcp) {
+                $this->fail('Cookie should not be set, it\'s disabled.');
+            }
+        } catch (\Throwable $throwable) {
+            error_reporting($originalErrorReporting);
+
+            throw $throwable;
+        } finally {
+            error_reporting($originalErrorReporting);
         }
+
     }
 
     /**
@@ -2355,6 +2432,8 @@ class UserTest extends \OxidTestCase
      */
     public function testLogout()
     {
+        $this->expectException(\PHPUnit\Framework\Error\Deprecated::class);
+
         $oUser = oxNew('oxUser');
         $oUser->login(oxADMIN_LOGIN, oxADMIN_PASSWD);
 
@@ -2622,6 +2701,8 @@ class UserTest extends \OxidTestCase
      */
     public function testLoadActiveUser_CookieLogin()
     {
+        $this->expectException(\PHPUnit\Framework\Error\Deprecated::class);
+
         $this->getConfig()->setConfigParam("blShowRememberMe", true);
 
         $oUser = $this->createUser();
