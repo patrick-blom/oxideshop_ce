@@ -2242,15 +2242,17 @@ class UserTest extends \OxidTestCase
     public function testLoginByPassingCustomerNumberNotAllowed()
     {
         $originalErrorReporting = error_reporting(E_ALL& ~E_DEPRECATED);
+        $exceptionThrown = false;
 
         try {
             $oUser = oxNew('oxUser');
             try {
                 $oUser->login(1, oxADMIN_PASSWD);
             } catch (Exception $oExcp) {
+                $exceptionThrown = true;
                 $this->assertEquals('ERROR_MESSAGE_USER_NOVALIDLOGIN', $oExcp->getMessage());
             }
-            $this->fail('exception must be thrown');
+            $this->assertTrue($exceptionThrown, 'exception must be thrown');
         } catch (\Throwable $throwable) {
             error_reporting($originalErrorReporting);
 
