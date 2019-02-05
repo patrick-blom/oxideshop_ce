@@ -6,6 +6,7 @@
 namespace OxidEsales\EshopCommunity\Tests\Integration\User;
 
 use oxField;
+use OxidEsales\Eshop\Application\Model\User;
 use oxRegistry;
 use oxUser;
 
@@ -13,6 +14,22 @@ require_once 'UserTestCase.php';
 
 class LoginTest extends UserTestCase
 {
+
+    private $originalErrorReporting;
+
+    protected function setUp()
+    {
+        parent::setUp();
+        $this->originalErrorReporting = error_reporting();
+        error_reporting($this->originalErrorReporting & ~E_DEPRECATED);
+    }
+
+    public function tearDown()
+    {
+        error_reporting($this->originalErrorReporting);
+        parent::tearDown();
+    }
+
     /**
      * Tries to login with password which is generated with old algorithm
      * and checks if password and salt were regenerated.
@@ -72,14 +89,18 @@ class LoginTest extends UserTestCase
      */
     public function testLoginWithNewPassword()
     {
-        $oUser = $this->_createUser($this->_sDefaultUserName, $this->_sNewEncodedPassword, $this->_sNewSalt);
+        $user = oxNew(User::class);
+        $salt = md5('salt');
+        $passwordHash = $user->encodePassword($this->_sDefaultUserPassword, $salt);
+
+        $oUser = $this->_createUser($this->_sDefaultUserName, $passwordHash, $salt);
         $this->_login();
 
         $oUser->load($oUser->getId());
 
         $this->assertSame($oUser->getId(), oxRegistry::getSession()->getVariable('usr'), 'User ID is missing in session.');
-        $this->assertSame($this->_sNewEncodedPassword, $oUser->oxuser__oxpassword->value, 'Password in database must match with new password.');
-        $this->assertSame($this->_sNewSalt, $oUser->oxuser__oxpasssalt->value, 'Salt in database must match with new salt.');
+        $this->assertSame($passwordHash, $oUser->oxuser__oxpassword->value, 'Password in database must match with new password.');
+        $this->assertSame($salt, $oUser->oxuser__oxpasssalt->value, 'Salt in database must match with new salt.');
     }
 
     public function providerNotSuccessfulLogin()

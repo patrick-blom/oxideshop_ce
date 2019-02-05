@@ -19,7 +19,7 @@ class PasswordHashServiceFactoryTest extends TestCase
 {
     /**
      */
-    public function testGetPasswordHashServiceThrowsExceptionOnNonSupportedAlgorythm()
+    public function testGetPasswordHashServiceThrowsExceptionOnNonSupportedAlgorithm()
     {
         $this->expectException(\OxidEsales\EshopCommunity\Internal\Password\Exception\PasswordHashException::class);
 

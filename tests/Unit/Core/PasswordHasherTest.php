@@ -16,7 +16,7 @@ class PasswordHasherTest extends \OxidTestCase
         $sSalt = 'salt';
 
         $oHasher = $this->getMock('oxSha512Hasher');
-        $oHasher->expects($this->once())->method('hash')->with($this->equalTo($sPassword . $sSalt));
+        $oHasher->expects($this->once())->method('hash')->with($this->equalTo($sPassword . $sSalt))->willReturn('somePasswordHash');
 
         $oPasswordHasher = new oxPasswordHasher($oHasher);
 
