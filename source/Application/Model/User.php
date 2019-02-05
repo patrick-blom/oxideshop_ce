@@ -1912,7 +1912,7 @@ class User extends \OxidEsales\Eshop\Core\Model\BaseModel
         }
 
         $passwordServiceBridge = $this->getContainer()->get(PasswordServiceBridgeInterface::class);
-        $passwordHashService = $passwordServiceBridge->getPasswordHashService('bcrypt', []);
+        $passwordHashService = $passwordServiceBridge->getPasswordHashService('bcrypt');
 
         $oHasher = oxNew(PasswordHasher::class, $passwordHashService);
 
