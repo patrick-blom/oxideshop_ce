@@ -765,28 +765,38 @@ class InputValidatorTest extends \OxidEsales\TestingLibrary\UnitTestCase
      */
     public function testCheckLoginNewLoginWrongPass()
     {
-        $user = oxNew(\OxidEsales\Eshop\Application\Model\User::class);
-        $user->setId("testlalaa_");
+        $originalErrorReporting = error_reporting();
+        error_reporting($originalErrorReporting & ~E_DEPRECATED);
 
-        $user->oxuser__oxpassword = new Field('a@a.a', Field::T_RAW);
-        $user->oxuser__oxusername = new Field('b@b.b', Field::T_RAW);
+        try {
+            $user = oxNew(\OxidEsales\Eshop\Application\Model\User::class);
+            $user->setId("testlalaa_");
 
-        $invoiceAdress['oxuser__oxusername'] = 'a@a.a';
-        $invoiceAdress['oxuser__oxpassword'] = 'b@b.b';
+            $user->oxuser__oxpassword = new Field('a@a.a', Field::T_RAW);
+            $user->oxuser__oxpasssalt = new Field(md5('salt'), Field::T_RAW);
+            $user->oxuser__oxusername = new Field('b@b.b', Field::T_RAW);
 
-        $validator = $this->getMock(\OxidEsales\Eshop\Core\InputValidator::class, array('_addValidationError'));
-        $validator->expects($this->once())->method('_addValidationError')
-            ->with(
-                $this->equalTo('oxuser__oxpassword'),
-                $this->logicalAnd(
-                    $this->isInstanceOf(\OxidEsales\Eshop\Core\Exception\UserException::class),
-                    $this->attributeEqualTo(
-                        'message',
-                        \OxidEsales\Eshop\Core\Registry::getLang()->translateString('ERROR_MESSAGE_PASSWORD_DO_NOT_MATCH'))
-                )
-            );
+            $invoiceAdress['oxuser__oxusername'] = 'a@a.a';
+            $invoiceAdress['oxuser__oxpassword'] = 'b@b.b';
 
-        $validator->checkLogin($user, '', $invoiceAdress);
+            $validator = $this->getMock(\OxidEsales\Eshop\Core\InputValidator::class, array('_addValidationError'));
+            $validator->expects($this->once())->method('_addValidationError')
+                ->with(
+                    $this->equalTo('oxuser__oxpassword'),
+                    $this->logicalAnd(
+                        $this->isInstanceOf(\OxidEsales\Eshop\Core\Exception\UserException::class),
+                        $this->attributeEqualTo(
+                            'message',
+                            \OxidEsales\Eshop\Core\Registry::getLang()->translateString('ERROR_MESSAGE_PASSWORD_DO_NOT_MATCH'))
+                    )
+                );
+
+            $validator->checkLogin($user, '', $invoiceAdress);
+        } catch (\Throwable $throwable) {
+            throw $throwable;
+        } finally {
+            error_reporting($originalErrorReporting);
+        }
     }
 
     /**

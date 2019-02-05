@@ -2239,8 +2239,6 @@ class UserTest extends \OxidTestCase
 
             $oUser->login(oxADMIN_LOGIN, oxADMIN_PASSWD);
         } catch (\Throwable $throwable) {
-            error_reporting($originalErrorReporting);
-
             throw $throwable;
         } finally {
             error_reporting($originalErrorReporting);
@@ -2265,8 +2263,6 @@ class UserTest extends \OxidTestCase
             }
             $this->assertTrue($exceptionThrown, 'exception must be thrown');
         } catch (\Throwable $throwable) {
-            error_reporting($originalErrorReporting);
-
             throw $throwable;
         } finally {
             error_reporting($originalErrorReporting);
@@ -2293,8 +2289,6 @@ class UserTest extends \OxidTestCase
             }
             $this->assertTrue($exceptionThrown, 'exception must be thrown due to problems loading user object');
         } catch (\Throwable $throwable) {
-            error_reporting($originalErrorReporting);
-
             throw $throwable;
         } finally {
             error_reporting($originalErrorReporting);
@@ -2324,8 +2318,6 @@ class UserTest extends \OxidTestCase
             }
             $this->assertTrue($exceptionThrown, 'exception must be thrown due to problems loading user object');
         } catch (\Throwable $throwable) {
-            error_reporting($originalErrorReporting);
-
             throw $throwable;
         } finally {
             error_reporting($originalErrorReporting);
@@ -2352,8 +2344,6 @@ class UserTest extends \OxidTestCase
             }
             $this->assertTrue($exceptionThrown, 'forced exception must be thrown');
         } catch (\Throwable $throwable) {
-            error_reporting($originalErrorReporting);
-
             throw $throwable;
         } finally {
             error_reporting($originalErrorReporting);
@@ -2378,8 +2368,6 @@ class UserTest extends \OxidTestCase
                 $this->fail('Cookie should not be set, it\'s disabled.');
             }
         } catch (\Throwable $throwable) {
-            error_reporting($originalErrorReporting);
-
             throw $throwable;
         } finally {
             error_reporting($originalErrorReporting);
