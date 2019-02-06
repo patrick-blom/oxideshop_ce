@@ -20,13 +20,13 @@ class LoginTest extends UserTestCase
     protected function setUp()
     {
         parent::setUp();
-        $this->originalErrorReporting = error_reporting();
-        error_reporting($this->originalErrorReporting & ~E_DEPRECATED);
+        // $this->originalErrorReporting = error_reporting();
+        // error_reporting($this->originalErrorReporting & ~E_DEPRECATED);
     }
 
     public function tearDown()
     {
-        error_reporting($this->originalErrorReporting);
+        // error_reporting($this->originalErrorReporting);
         parent::tearDown();
     }
 

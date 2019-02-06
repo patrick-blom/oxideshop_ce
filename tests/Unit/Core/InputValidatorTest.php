@@ -765,8 +765,7 @@ class InputValidatorTest extends \OxidEsales\TestingLibrary\UnitTestCase
      */
     public function testCheckLoginNewLoginWrongPass()
     {
-        $originalErrorReporting = error_reporting();
-        error_reporting($originalErrorReporting & ~E_DEPRECATED);
+        $originalErrorReporting = $this->disableDeprecatedErrors();
 
         try {
             $user = oxNew(\OxidEsales\Eshop\Application\Model\User::class);
@@ -1225,6 +1224,17 @@ class InputValidatorTest extends \OxidEsales\TestingLibrary\UnitTestCase
         $aCheckers = $oVatInValidator->getCheckers();
         $this->assertSame(1, count($aCheckers));
         $this->assertFalse($aCheckers[0] instanceof \OxidEsales\EshopCommunity\Core\OnlineVatIdCheck);
+    }
+
+    /**
+     * @return int
+     */
+    private function disableDeprecatedErrors(): int
+    {
+        $originalErrorReporting = error_reporting();
+        error_reporting($originalErrorReporting & ~E_DEPRECATED);
+
+        return error_reporting(); //$originalErrorReporting;
     }
 
 }

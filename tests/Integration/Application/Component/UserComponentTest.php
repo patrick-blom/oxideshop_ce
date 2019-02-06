@@ -1704,6 +1704,6 @@ class UserComponentTest extends \OxidTestCase
         $originalErrorReporting = error_reporting();
         error_reporting($originalErrorReporting & ~E_DEPRECATED);
 
-        return $originalErrorReporting;
+        return error_reporting(); //$originalErrorReporting;
     }
 }
