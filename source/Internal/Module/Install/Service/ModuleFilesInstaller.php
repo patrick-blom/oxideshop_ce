@@ -6,12 +6,11 @@
 
 namespace OxidEsales\EshopCommunity\Internal\Module\Install\Service;
 
-use OxidEsales\EshopCommunity\Internal\Common\Exception\DirectoryExistentException;
 use OxidEsales\EshopCommunity\Internal\Common\FileSystem\FinderFactoryInterface;
 use OxidEsales\EshopCommunity\Internal\Application\Utility\BasicContextInterface;
-use OxidEsales\EshopCommunity\Internal\Module\Install\Dao\OxidEshopPackageDaoInterface;
 use OxidEsales\EshopCommunity\Internal\Module\Install\DataObject\OxidEshopPackage;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Finder\Finder;
 use Webmozart\PathUtil\Path;
 
 /**
@@ -21,11 +20,6 @@ use Webmozart\PathUtil\Path;
  */
 class ModuleFilesInstaller implements ModuleFilesInstallerInterface
 {
-    /**
-     * @var OxidEshopPackageDaoInterface
-     */
-    private $packageDao;
-
     /** @var BasicContextInterface $context */
     private $context;
 
@@ -39,75 +33,28 @@ class ModuleFilesInstaller implements ModuleFilesInstallerInterface
 
     /**
      * ModuleFilesInstaller constructor.
-     * @param OxidEshopPackageDaoInterface $packageDao
-     * @param BasicContextInterface        $context
-     * @param Filesystem                   $fileSystemService
-     * @param FinderFactoryInterface       $finderFactory
+     * @param BasicContextInterface  $context
+     * @param Filesystem             $fileSystemService
+     * @param FinderFactoryInterface $finderFactory
      */
     public function __construct(
-        OxidEshopPackageDaoInterface $packageDao,
         BasicContextInterface $context,
         Filesystem $fileSystemService,
         FinderFactoryInterface $finderFactory
     ) {
-        $this->packageDao = $packageDao;
         $this->context = $context;
         $this->fileSystemService = $fileSystemService;
         $this->finderFactory = $finderFactory;
     }
 
-
     /**
-     * Copies from vendor directory to source/modules directory respecting the blacklist filters given by the module.
-     *
-     * @param string $packagePath Path to the package like /var/www/vendor/oxid-esales/paypal
-     *
-     * @throws DirectoryExistentException
+     * @param string           $packagePath
+     * @param OxidEshopPackage $package
      */
-    public function copy(string $packagePath)
+    public function install(string $packagePath, OxidEshopPackage $package)
     {
-        if ($this->isInstalled($packagePath)) {
-            $package = $this->packageDao->getPackage($packagePath);
-            throw new DirectoryExistentException($this->getTargetPath($package));
-        }
-
-        $this->copyFiles($packagePath);
-    }
-
-    /**
-     * @param string $packagePath
-     */
-    public function forceCopy(string $packagePath)
-    {
-        $this->copyFiles($packagePath);
-    }
-
-    /**
-     * @param string $packagePath
-     *
-     * @return bool
-     */
-    public function isInstalled(string $packagePath): bool
-    {
-        $package = $this->packageDao->getPackage($packagePath);
-        return file_exists($this->getTargetPath($package));
-    }
-
-    /**
-     * @param string $packagePath
-     */
-    private function copyFiles(string $packagePath)
-    {
-        $package = $this->packageDao->getPackage($packagePath);
-
         $sourceDirectory = $this->getSourcePath($packagePath, $package);
-
-        $finder = $this->finderFactory->create();
-        $finder->in($sourceDirectory);
-
-        foreach ($package->getBlackListFilters() as $filter) {
-            $finder->notName($filter);
-        }
+        $finder = $this->getFinder($sourceDirectory, $package->getBlackListFilters());
 
         $this->fileSystemService->mirror(
             $sourceDirectory,
@@ -115,6 +62,33 @@ class ModuleFilesInstaller implements ModuleFilesInstallerInterface
             $finder,
             ['override' => true]
         );
+    }
+
+    /**
+     * @param string           $packagePath
+     * @param OxidEshopPackage $package
+     * @return bool
+     */
+    public function isInstalled(string $packagePath, OxidEshopPackage $package): bool
+    {
+        return file_exists($this->getTargetPath($package));
+    }
+
+    /**
+     * @param string $sourceDirectory
+     * @param array  $blackListFilters
+     * @return Finder
+     */
+    private function getFinder(string $sourceDirectory, array $blackListFilters): Finder
+    {
+        $finder = $this->finderFactory->create();
+        $finder->in($sourceDirectory);
+
+        foreach ($blackListFilters as $filter) {
+            $finder->notName($filter);
+        }
+
+        return $finder;
     }
 
     /**
