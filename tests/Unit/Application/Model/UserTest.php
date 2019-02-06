@@ -527,12 +527,12 @@ class UserTest extends \OxidTestCase
     {
         $this->expectException(\PHPUnit\Framework\Error\Deprecated::class);
 
-        $sPassword = 'xxx';
-        $sSalt = 'yyy';
-        $sEncPass = password_hash($sPassword, PASSWORD_BCRYPT, ['salt' => $sSalt]);
+        $password = 'secret';
+        $salt = md5('salt');
+        $passwordHash = password_hash($password, PASSWORD_BCRYPT, ['salt' => $salt]);
 
         $oUser = oxNew('oxUser');
-        $this->assertEquals($sEncPass, $oUser->encodePassword($sPassword, $sSalt));
+        $this->assertEquals($passwordHash, $oUser->encodePassword($password, $salt));
     }
 
     public function testEncodePasswordIsDeterministic()
@@ -540,12 +540,12 @@ class UserTest extends \OxidTestCase
         $this->expectException(\PHPUnit\Framework\Error\Deprecated::class);
 
         $password = 'secret';
-        $salt = 'salt';
+        $salt = md5('salt');
         $user = new User();
-        $hash_1 = $user->encodePassword($password, $salt);
-        $hash_2 = $user->encodePassword($password, $salt);
+        $passwordHash_1 = $user->encodePassword($password, $salt);
+        $passwordHash_2 = $user->encodePassword($password, $salt);
 
-        $this->assertSame($hash_1, $hash_2);
+        $this->assertSame($passwordHash_1, $passwordHash_2);
     }
 
     public function testGetUpdateId()
