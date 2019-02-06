@@ -250,39 +250,32 @@ class UserComponentTest extends \OxidTestCase
      */
     public function testCreateUserForLoginFeature()
     {
-        $originalErrorReporting = $this->disableDeprecatedErrors();
-        try {
-            oxTestModules::addFunction("oxemail", "sendRegisterEmail", "{ return true;}");
-            $this->setRequestParameter('lgn_usr', 'test@oxid-esales.com');
-            $this->setRequestParameter('lgn_pwd', 'Test@oxid-esales.com');
-            $this->setRequestParameter('lgn_pwd2', 'Test@oxid-esales.com');
-            $this->setRequestParameter('ord_agb', true);
-            $this->setRequestParameter('option', 3);
-            $aRawVal = array('oxuser__oxfname'     => 'fname',
-                             'oxuser__oxlname'     => 'lname',
-                             'oxuser__oxstreetnr'  => 'nr',
-                             'oxuser__oxstreet'    => 'street',
-                             'oxuser__oxzip'       => 'zip',
-                             'oxuser__oxcity'      => 'city',
-                             'oxuser__oxcountryid' => 'a7c40f631fc920687.20179984');
-            $this->setRequestParameter('invadr', $aRawVal);
+        oxTestModules::addFunction("oxemail", "sendRegisterEmail", "{ return true;}");
+        $this->setRequestParameter('lgn_usr', 'test@oxid-esales.com');
+        $this->setRequestParameter('lgn_pwd', 'Test@oxid-esales.com');
+        $this->setRequestParameter('lgn_pwd2', 'Test@oxid-esales.com');
+        $this->setRequestParameter('ord_agb', true);
+        $this->setRequestParameter('option', 3);
+        $aRawVal = array('oxuser__oxfname'     => 'fname',
+                         'oxuser__oxlname'     => 'lname',
+                         'oxuser__oxstreetnr'  => 'nr',
+                         'oxuser__oxstreet'    => 'street',
+                         'oxuser__oxzip'       => 'zip',
+                         'oxuser__oxcity'      => 'city',
+                         'oxuser__oxcountryid' => 'a7c40f631fc920687.20179984');
+        $this->setRequestParameter('invadr', $aRawVal);
 
-            $this->getConfig()->setConfigParam("blInvitationsEnabled", false);
+        $this->getConfig()->setConfigParam("blInvitationsEnabled", false);
 
-            $oParent = $this->getMock(\OxidEsales\Eshop\Application\Controller\FrontendController::class, array("isEnabledPrivateSales"));
-            $oParent->expects($this->atLeastOnce())->method('isEnabledPrivateSales')->will($this->returnValue(true));
+        $oParent = $this->getMock(\OxidEsales\Eshop\Application\Controller\FrontendController::class, array("isEnabledPrivateSales"));
+        $oParent->expects($this->atLeastOnce())->method('isEnabledPrivateSales')->will($this->returnValue(true));
 
-            $oUserView = $this->getMock($this->getProxyClassName("oxcmp_user"), array('login', 'getParent'));
-            $oUserView->expects($this->any())->method('login')->will($this->returnValue('payment'));
-            $oUserView->expects($this->any())->method('getParent')->will($this->returnValue($oParent));
+        $oUserView = $this->getMock($this->getProxyClassName("oxcmp_user"), array('login', 'getParent'));
+        $oUserView->expects($this->any())->method('login')->will($this->returnValue('payment'));
+        $oUserView->expects($this->any())->method('getParent')->will($this->returnValue($oParent));
 
-            $this->assertEquals('payment?new_user=1&success=1', $oUserView->createUser());
-            $this->assertTrue($oUserView->getNonPublicVar('_blIsNewUser'));
-        } catch (\Throwable $throwable) {
-            throw $throwable;
-        } finally {
-            error_reporting($originalErrorReporting);
-        }
+        $this->assertEquals('payment?new_user=1&success=1', $oUserView->createUser());
+        $this->assertTrue($oUserView->getNonPublicVar('_blIsNewUser'));
     }
 
     /**
@@ -420,52 +413,45 @@ class UserComponentTest extends \OxidTestCase
      */
     public function testBlockedUser()
     {
-        $originalErrorReporting = $this->disableDeprecatedErrors();
+        $myDB = oxDb::getDB();
+        $sTable = getViewName('oxuser');
+        $iLastCustNr = ( int ) $myDB->getOne('select max( oxcustnr ) from ' . $sTable) + 1;
+        $oUser = oxNew('oxuser');
+        $salt = md5('salt');
+        $paswordHash = $oUser->encodePassword('secret', $salt);
+        $oUser->oxuser__oxshopid = new oxField($this->getConfig()->getShopId(), oxField::T_RAW);
+        $oUser->oxuser__oxactive = new oxField(1, oxField::T_RAW);
+        $oUser->oxuser__oxrights = new oxField('user', oxField::T_RAW);
+        $oUser->oxuser__oxusername = new oxField('test@oxid-esales.com', oxField::T_RAW);
+        $oUser->oxuser__oxpassword = new oxField($paswordHash);
+        $oUser->oxuser__oxpasssalt = new oxField($salt, oxField::T_RAW);
+        $oUser->oxuser__oxcustnr = new oxField($iLastCustNr + 1, oxField::T_RAW);
+        $oUser->oxuser__oxcountryid = new oxField("testCountry", oxField::T_RAW);
+        $oUser->save();
+        $sQ = 'insert into oxaddress ( oxid, oxuserid, oxaddressuserid, oxcountryid ) values ( "test_user", "' . $oUser->getId() . '", "' . $oUser->getId() . '", "testCountry" ) ';
+        $myDB->Execute($sQ);
+
+        oxTestModules::addFunction("oxUtils", "redirect", "{ throw new exception( 'testBlockedUser', 123 );}");
+
+        $oUser2 = oxNew('oxuser');
+        $oUser2->load($oUser->getId());
+        $oUser2->login('test@oxid-esales.com', 'secret');
+
+        $myDB = oxDb::getDB();
+        $sQ = 'insert into oxobject2group (oxid,oxshopid,oxobjectid,oxgroupsid) values ( "' . $oUser2->getId() . '", "' . $this->getConfig()->getShopId() . '", "' . $oUser2->getId() . '", "oxidblocked" )';
+        $myDB->Execute($sQ);
+
         try {
-            $myDB = oxDb::getDB();
-            $sTable = getViewName('oxuser');
-            $iLastCustNr = ( int ) $myDB->getOne('select max( oxcustnr ) from ' . $sTable) + 1;
-            $oUser = oxNew('oxuser');
-            $salt = md5('salt');
-            $paswordHash = $oUser->encodePassword('secret', $salt);
-            $oUser->oxuser__oxshopid = new oxField($this->getConfig()->getShopId(), oxField::T_RAW);
-            $oUser->oxuser__oxactive = new oxField(1, oxField::T_RAW);
-            $oUser->oxuser__oxrights = new oxField('user', oxField::T_RAW);
-            $oUser->oxuser__oxusername = new oxField('test@oxid-esales.com', oxField::T_RAW);
-            $oUser->oxuser__oxpassword = new oxField($paswordHash);
-            $oUser->oxuser__oxpasssalt = new oxField($salt, oxField::T_RAW);
-            $oUser->oxuser__oxcustnr = new oxField($iLastCustNr + 1, oxField::T_RAW);
-            $oUser->oxuser__oxcountryid = new oxField("testCountry", oxField::T_RAW);
-            $oUser->save();
-            $sQ = 'insert into oxaddress ( oxid, oxuserid, oxaddressuserid, oxcountryid ) values ( "test_user", "' . $oUser->getId() . '", "' . $oUser->getId() . '", "testCountry" ) ';
-            $myDB->Execute($sQ);
-
-            oxTestModules::addFunction("oxUtils", "redirect", "{ throw new exception( 'testBlockedUser', 123 );}");
-
-            $oUser2 = oxNew('oxuser');
-            $oUser2->load($oUser->getId());
-            $oUser2->login('test@oxid-esales.com', 'secret');
-
-            $myDB = oxDb::getDB();
-            $sQ = 'insert into oxobject2group (oxid,oxshopid,oxobjectid,oxgroupsid) values ( "' . $oUser2->getId() . '", "' . $this->getConfig()->getShopId() . '", "' . $oUser2->getId() . '", "oxidblocked" )';
-            $myDB->Execute($sQ);
-
-            try {
-                $oUserView = oxNew('oxcmp_user');
-                $oUserView->init();
-            } catch (Exception $oE) {
-                if ($oE->getCode() === 123) {
-                    $oUser2->logout();
-                    $exceptionThrown = true;
-                }
+            $oUserView = oxNew('oxcmp_user');
+            $oUserView->init();
+        } catch (Exception $oE) {
+            if ($oE->getCode() === 123) {
+                $oUser2->logout();
+                $exceptionThrown = true;
             }
-            $oUser->logout();
-            $this->assertTrue($exceptionThrown, 'first assert should throw an exception');
-        } catch (\Throwable $throwable) {
-            throw $throwable;
-        } finally {
-            error_reporting($originalErrorReporting);
         }
+        $oUser->logout();
+        $this->assertTrue($exceptionThrown, 'first assert should throw an exception');
     }
 
     /**
@@ -741,38 +727,31 @@ class UserComponentTest extends \OxidTestCase
      */
     public function testCreateUser()
     {
-        $originalErrorReporting = $this->disableDeprecatedErrors();
-        try {
-            oxTestModules::addFunction("oxemail", "sendRegisterEmail", "{ return true;}");
-            $this->setRequestParameter('lgn_usr', 'test@oxid-esales.com');
-            $this->setRequestParameter('lgn_pwd', 'Test@oxid-esales.com');
-            $this->setRequestParameter('lgn_pwd2', 'Test@oxid-esales.com');
-            $this->setRequestParameter('order_remark', 'TestRemark');
-            $this->setRequestParameter('option', 3);
-            $aRawVal = array('oxuser__oxfname'     => 'fname',
-                             'oxuser__oxlname'     => 'lname',
-                             'oxuser__oxstreetnr'  => 'nr',
-                             'oxuser__oxstreet'    => 'street',
-                             'oxuser__oxzip'       => 'zip',
-                             'oxuser__oxcity'      => 'city',
-                             'oxuser__oxcountryid' => 'a7c40f631fc920687.20179984');
-            $this->setRequestParameter('invadr', $aRawVal);
+        oxTestModules::addFunction("oxemail", "sendRegisterEmail", "{ return true;}");
+        $this->setRequestParameter('lgn_usr', 'test@oxid-esales.com');
+        $this->setRequestParameter('lgn_pwd', 'Test@oxid-esales.com');
+        $this->setRequestParameter('lgn_pwd2', 'Test@oxid-esales.com');
+        $this->setRequestParameter('order_remark', 'TestRemark');
+        $this->setRequestParameter('option', 3);
+        $aRawVal = array('oxuser__oxfname'     => 'fname',
+                         'oxuser__oxlname'     => 'lname',
+                         'oxuser__oxstreetnr'  => 'nr',
+                         'oxuser__oxstreet'    => 'street',
+                         'oxuser__oxzip'       => 'zip',
+                         'oxuser__oxcity'      => 'city',
+                         'oxuser__oxcountryid' => 'a7c40f631fc920687.20179984');
+        $this->setRequestParameter('invadr', $aRawVal);
 
-            $this->getConfig()->setConfigParam("blPsLoginEnabled", false);
+        $this->getConfig()->setConfigParam("blPsLoginEnabled", false);
 
-            $oParent = $this->getMock(\OxidEsales\Eshop\Application\Controller\FrontendController::class, array("isEnabledPrivateSales"));
-            $oParent->expects($this->atLeastOnce())->method('isEnabledPrivateSales')->will($this->returnValue(false));
+        $oParent = $this->getMock(\OxidEsales\Eshop\Application\Controller\FrontendController::class, array("isEnabledPrivateSales"));
+        $oParent->expects($this->atLeastOnce())->method('isEnabledPrivateSales')->will($this->returnValue(false));
 
-            $oUserView = $this->getMock($this->getProxyClassName("oxcmp_user"), array('getParent'));
-            $oUserView->expects($this->any())->method('getParent')->will($this->returnValue($oParent));
-            $this->assertEquals('payment?new_user=1&success=1', $oUserView->createUser());
-            $this->assertEquals('TestRemark', oxRegistry::getSession()->getVariable('ordrem'));
-            $this->assertTrue($oUserView->getNonPublicVar('_blIsNewUser'));
-        } catch (\Throwable $throwable) {
-            throw $throwable;
-        } finally {
-            error_reporting($originalErrorReporting);
-        }
+        $oUserView = $this->getMock($this->getProxyClassName("oxcmp_user"), array('getParent'));
+        $oUserView->expects($this->any())->method('getParent')->will($this->returnValue($oParent));
+        $this->assertEquals('payment?new_user=1&success=1', $oUserView->createUser());
+        $this->assertEquals('TestRemark', oxRegistry::getSession()->getVariable('ordrem'));
+        $this->assertTrue($oUserView->getNonPublicVar('_blIsNewUser'));
     }
 
     /**
@@ -1554,88 +1533,81 @@ class UserComponentTest extends \OxidTestCase
      */
     public function testCreateUserAddressTrimming()
     {
-        $originalErrorReporting = $this->disableDeprecatedErrors();
-        try {
-            oxTestModules::addFunction("oxemail", "sendRegisterEmail", "{ return true;}");
+        oxTestModules::addFunction("oxemail", "sendRegisterEmail", "{ return true;}");
 
-            $this->setRequestParameter('lgn_usr', 'testAddressTrimming@oxid-esales.com');
-            $this->setRequestParameter('lgn_pwd', 'Test@oxid-esales.com');
-            $this->setRequestParameter('lgn_pwd2', 'Test@oxid-esales.com');
-            $this->setRequestParameter('option', 3);
+        $this->setRequestParameter('lgn_usr', 'testAddressTrimming@oxid-esales.com');
+        $this->setRequestParameter('lgn_pwd', 'Test@oxid-esales.com');
+        $this->setRequestParameter('lgn_pwd2', 'Test@oxid-esales.com');
+        $this->setRequestParameter('option', 3);
 
-            $untrimmedInvoiceAddress = [
-                'oxuser__oxfname'     => ' Simon ',
-                'oxuser__oxlname'     => ' de la Serna ',
-                'oxuser__oxstreetnr'  => 'nr',
-                'oxuser__oxstreet'    => 'street ',
-                'oxuser__oxzip'       => 'zip',
-                'oxuser__oxcity'      => 'city',
-                'oxuser__oxcountryid' => 'a7c40f631fc920687.20179984',
-            ];
+        $untrimmedInvoiceAddress = [
+            'oxuser__oxfname'     => ' Simon ',
+            'oxuser__oxlname'     => ' de la Serna ',
+            'oxuser__oxstreetnr'  => 'nr',
+            'oxuser__oxstreet'    => 'street ',
+            'oxuser__oxzip'       => 'zip',
+            'oxuser__oxcity'      => 'city',
+            'oxuser__oxcountryid' => 'a7c40f631fc920687.20179984',
+        ];
 
-            $untrimmedDeliveryAddress = [
-                'oxaddress__oxfname'     => ' Simon ',
-                'oxaddress__oxlname'     => ' de la Serna ',
-                'oxaddress__oxstreetnr'  => 'nr',
-                'oxaddress__oxstreet'    => 'street ',
-                'oxaddress__oxzip'       => 'zip',
-                'oxaddress__oxcity'      => 'city',
-                'oxaddress__oxcountryid' => 'a7c40f631fc920687.20179984',
-            ];
+        $untrimmedDeliveryAddress = [
+            'oxaddress__oxfname'     => ' Simon ',
+            'oxaddress__oxlname'     => ' de la Serna ',
+            'oxaddress__oxstreetnr'  => 'nr',
+            'oxaddress__oxstreet'    => 'street ',
+            'oxaddress__oxzip'       => 'zip',
+            'oxaddress__oxcity'      => 'city',
+            'oxaddress__oxcountryid' => 'a7c40f631fc920687.20179984',
+        ];
 
-            $trimmedAddressValues = [
-                'Simon',
-                'de la Serna',
-            ];
+        $trimmedAddressValues = [
+            'Simon',
+            'de la Serna',
+        ];
 
-            $this->setRequestParameter('invadr', $untrimmedInvoiceAddress);
-            $this->setRequestParameter('deladr', $untrimmedDeliveryAddress);
-            $this->setRequestParameter('blshowshipaddress', true);
+        $this->setRequestParameter('invadr', $untrimmedInvoiceAddress);
+        $this->setRequestParameter('deladr', $untrimmedDeliveryAddress);
+        $this->setRequestParameter('blshowshipaddress', true);
 
-            $parent = $this->getMock(\OxidEsales\Eshop\Application\Controller\FrontendController::class);
+        $parent = $this->getMock(\OxidEsales\Eshop\Application\Controller\FrontendController::class);
 
-            $userComponent = $this->getMock(
-                $this->getProxyClassName("oxcmp_user"),
-                ['getParent']
-            );
+        $userComponent = $this->getMock(
+            $this->getProxyClassName("oxcmp_user"),
+            ['getParent']
+        );
 
-            $userComponent
-                ->expects($this->any())
-                ->method('getParent')
-                ->will($this->returnValue($parent));
+        $userComponent
+            ->expects($this->any())
+            ->method('getParent')
+            ->will($this->returnValue($parent));
 
-            $this->assertEquals('payment?new_user=1&success=1', $userComponent->createUser());
+        $this->assertEquals('payment?new_user=1&success=1', $userComponent->createUser());
 
-            $userId = oxRegistry::getSession()->getVariable('usr');
+        $userId = oxRegistry::getSession()->getVariable('usr');
 
-            $user = oxNew('oxuser');
-            $user->load($userId);
+        $user = oxNew('oxuser');
+        $user->load($userId);
 
-            $this->assertEquals(
-                $trimmedAddressValues,
-                [
-                    $user->oxuser__oxfname->value,
-                    $user->oxuser__oxlname->value,
-                ]
-            );
+        $this->assertEquals(
+            $trimmedAddressValues,
+            [
+                $user->oxuser__oxfname->value,
+                $user->oxuser__oxlname->value,
+            ]
+        );
 
-            $deliveryAddressId = oxRegistry::getSession()->getVariable('deladrid');
+        $deliveryAddressId = oxRegistry::getSession()->getVariable('deladrid');
 
-            $deliveryAddress = oxNew('oxaddress');
-            $deliveryAddress->load($deliveryAddressId);
+        $deliveryAddress = oxNew('oxaddress');
+        $deliveryAddress->load($deliveryAddressId);
 
-            $this->assertEquals(
-                $trimmedAddressValues,
-                [
-                    $deliveryAddress->oxaddress__oxfname->value,
-                    $deliveryAddress->oxaddress__oxlname->value,
-                ]
-            );
-        } catch (\Throwable $throwable) {
-            throw $throwable;
-        } finally {
-            error_reporting($originalErrorReporting);
-        }
+        $this->assertEquals(
+            $trimmedAddressValues,
+            [
+                $deliveryAddress->oxaddress__oxfname->value,
+                $deliveryAddress->oxaddress__oxlname->value,
+            ]
+        );
     }
 
     /**
@@ -1694,16 +1666,5 @@ class UserComponentTest extends \OxidTestCase
     {
         $this->setSessionParam('sess_stoken', 'testToken');
         $this->setRequestParameter('stoken', 'testToken');
-    }
-
-    /**
-     * @return int
-     */
-    private function disableDeprecatedErrors(): int
-    {
-        $originalErrorReporting = error_reporting();
-        error_reporting($originalErrorReporting & ~E_DEPRECATED);
-
-        return error_reporting(); //$originalErrorReporting;
     }
 }

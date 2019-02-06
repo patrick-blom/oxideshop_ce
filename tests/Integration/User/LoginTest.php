@@ -14,22 +14,6 @@ require_once 'UserTestCase.php';
 
 class LoginTest extends UserTestCase
 {
-
-    private $originalErrorReporting;
-
-    protected function setUp()
-    {
-        parent::setUp();
-        // $this->originalErrorReporting = error_reporting();
-        // error_reporting($this->originalErrorReporting & ~E_DEPRECATED);
-    }
-
-    public function tearDown()
-    {
-        // error_reporting($this->originalErrorReporting);
-        parent::tearDown();
-    }
-
     /**
      * Tries to login with password which is generated with old algorithm
      * and checks if password and salt were regenerated.
